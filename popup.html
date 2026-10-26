@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 320px;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      color: #202124;
+    }
+    .header {
+      font-size: 14px;
+      font-weight: bold;
+      color: #1a73e8;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .box {
+      background: #f8f9fa;
+      border: 1px solid #dadce0;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 12px;
+      max-height: 80px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+      word-break: break-all;
+    }
+    .result {
+      background: #e8f0fe;
+      border-left: 4px solid #1a73e8;
+      padding: 10px;
+      font-size: 12px;
+      line-height: 1.5;
+      border-radius: 0 8px 8px 0;
+    }
+    .tag {
+      font-size: 10px;
+      background: #e6f4ea;
+      color: #137333;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span>Gemini 速审助手</span>
+    <span class="tag">本地就绪</span>
+  </div>
+
+  <div style="font-size: 11px; color: #5f6368; margin-bottom: 4px;">划选内容：</div>
+  <div id="sourceText" class="box">等待网页划词...</div>
+
+  <div style="font-size: 11px; color: #5f6368; margin-bottom: 4px;">Gemini 核心摘要 / 安全建议：</div>
+  <div id="resultText" class="result">点击网页右键即可一键分析。</div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
