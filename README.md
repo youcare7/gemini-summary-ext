@@ -206,4 +206,5 @@ gemini-summary-ext/
 ## 开源许可
 
 代码：MIT  
-图标：[Lucide ISC License](assets/icons/LICENSE)
+图标：[Lucide ISC License](assets/icons/LICENSE)  
+更新日志：[CHANGELOG.md](CHANGELOG.md)
