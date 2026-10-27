@@ -1,0 +1,223 @@
+openapi: 3.0.3
+info:
+  title: Gemini Interactions API project subset
+  version: 1.0.0
+  description: Contract for the extension's direct, stateless text-analysis requests. This is an external API subset, not a first-party backend.
+servers:
+  - url: https://generativelanguage.googleapis.com
+paths:
+  /v1beta/interactions:
+    post:
+      summary: Create a stateless text interaction
+      parameters:
+        - name: Api-Revision
+          in: header
+          required: true
+          schema:
+            type: string
+            enum: ['2026-05-20']
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAnalysisInteractionRequest'
+      responses:
+        '200':
+          description: Interaction completed; the client must still validate status, steps, text and analysis JSON.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interaction'
+        '400':
+          description: Invalid request or blocked content.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Project, key or model permission denied.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Model or endpoint not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit or quota exhausted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Gemini internal error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Gemini temporarily unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-goog-api-key
+  schemas:
+    CreateAnalysisInteractionRequest:
+      type: object
+      additionalProperties: false
+      required: [model, system_instruction, input, store, stream, generation_config, response_format]
+      properties:
+        model:
+          type: string
+          example: gemini-3.5-flash
+        system_instruction:
+          type: string
+        input:
+          type: string
+          minLength: 1
+          maxLength: 12000
+        store:
+          type: boolean
+          enum: [false]
+        stream:
+          type: boolean
+          enum: [false]
+        generation_config:
+          type: object
+          additionalProperties: false
+          required: [max_output_tokens]
+          properties:
+            max_output_tokens:
+              type: integer
+              minimum: 1
+              maximum: 2048
+        response_format:
+          type: object
+          additionalProperties: false
+          required: [type, mime_type, schema]
+          properties:
+            type:
+              type: string
+              enum: [text]
+            mime_type:
+              type: string
+              enum: [application/json]
+            schema:
+              $ref: '#/components/schemas/AnalysisResultSchema'
+    AnalysisResultSchema:
+      type: object
+      description: JSON Schema sent to Gemini for structured output.
+      required: [type, properties, required, additionalProperties]
+      properties:
+        type:
+          type: string
+          enum: [object]
+        properties:
+          type: object
+        required:
+          type: array
+          items:
+            type: string
+        additionalProperties:
+          type: boolean
+          enum: [false]
+    Interaction:
+      type: object
+      additionalProperties: true
+      required: [status, steps]
+      properties:
+        id:
+          type: string
+        model:
+          type: string
+        status:
+          type: string
+          example: completed
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/InteractionStep'
+    InteractionStep:
+      type: object
+      additionalProperties: true
+      required: [type]
+      properties:
+        type:
+          type: string
+          example: model_output
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContentItem'
+    ContentItem:
+      type: object
+      additionalProperties: true
+      required: [type]
+      properties:
+        type:
+          type: string
+          example: text
+        text:
+          type: string
+          description: Serialized AnalysisResult when the model output is text.
+    AnalysisResult:
+      type: object
+      additionalProperties: false
+      required: [mode, output, findings]
+      properties:
+        mode:
+          type: string
+          enum: [summary, security, translate]
+        output:
+          type: string
+        findings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Finding'
+    Finding:
+      type: object
+      additionalProperties: false
+      required: [severity, category, evidence, recommendation]
+      properties:
+        severity:
+          type: string
+          enum: [info, low, medium, high]
+        category:
+          type: string
+        evidence:
+          type: string
+          description: A short verbatim quote from the selected input, or an empty string when no evidence exists.
+        recommendation:
+          type: string
+    ErrorResponse:
+      type: object
+      additionalProperties: true
+      required: [error]
+      properties:
+        error:
+          type: object
+          additionalProperties: true
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
