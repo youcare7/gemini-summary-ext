@@ -46,6 +46,8 @@
 
 ## 快速开始
 
+![弹窗空态](assets/screenshots/01-popup-idle.png)
+
 ### 1. 安装
 
 1. 打开 Chrome，地址栏输入 `chrome://extensions/`
@@ -65,6 +67,10 @@
 ### 3. 开始使用
 
 划选文字 → 选择模式 → 点击主按钮 → 查看结果
+
+![摘要结果（离线演示）](assets/screenshots/02-result-summary.png)
+
+![设置页](assets/screenshots/03-settings.png)
 
 ---
 
