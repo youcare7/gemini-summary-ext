@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Gemini 极简速审助手",
+  "version": "0.9.0",
+  "description": "基于 Gemini 的划词总结与安全速审工具",
+  "minimum_chrome_version": "127",
+  "permissions": [
+    "contextMenus",
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://generativelanguage.googleapis.com/"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "commands": {
+    "analyze-selection": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "使用 Gemini 速审选中内容"
+    }
+  }
+}
