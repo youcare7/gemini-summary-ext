@@ -1,0 +1,51 @@
+style(popup): 视觉层级重排 + 补工具栏图标 + 修原文预览半行截断
+
+图标
+- 新增 assets/icons/icon-{16,32,48,128}.png 与 scripts/gen-icons.mjs
+- manifest 补顶层 icons 与 action.default_icon/default_title
+  修复此前工具栏显示灰色拼图的问题
+- 16/32/48 用三横条简化画法，128 用 Lucide file-text 原样渲染，
+  按墨迹占比而非容器占比对齐视觉体量
+
+对比度
+- 新增 --border-control（--border 55% + --fg-2 45%），
+  控件边界实测 3.11:1，修原 --border 1.43:1 违反
+  UIUX §10「控件边界 ≥3:1」
+- 容器卡片统一 --border-soft，交互控件统一 --border-control
+- 输入框 hover 由 --accent 改 --fg-2，避免每屏强调色超两处
+
+间距节奏
+- .app-header 下边距 16 → 20（标题与正文分离）
+- #view-main gap 16 → 12（同组元素收紧）
+- #view-settings gap 24（三张卡片明确分组）
+- 三处卡片内边距 12 → 16
+- .status:empty min-height 0（状态清空后不留空档）
+
+禁用态
+- 四处 :hover 补 :not(:disabled)，修 .btn-primary:hover(0,2,0)
+  盖过 button:disabled(0,1,1) 导致的禁用态闪青
+- .btn-primary:disabled 改虚线占位，就绪态与空态形成形态差
+
+排版
+- .source-head h2 与 .result-heading 统一 510 字重 + 0.02em 字距 + margin 0
+- .result-output 行高 1.7，加 text-wrap: pretty / line-break: strict，
+  顶部细线分区
+- 骨架屏改 1.6s ease-in-out 透明度往复，幅度 1 → 0.72（原 0.55 过闪）
+
+修复
+- .source-text max-height 44px 非行高整数倍（12px × 1.55 = 18.6px），
+  折叠态第三行被拦腰截断出现半行残缺字形；改为字号×行高×3 的整数倍，
+  展开态同理取 6 行
+
+无障碍
+- 模式单选改标准 .sr-only（clip → clip-path: inset(50%)），
+  删除 .mode-option input 的重复隐藏规则
+- .copy-feedback 去掉 role="status" 已隐含的 aria-live，空态折叠不占位
+- .privacy-hint 与 .hint 规则完全重复，合并为 .hint
+
+Token 清理
+- 删除 8 个死 Token：--text-lg / --weight-read / --space-8 /
+  --radius-lg / --radius-pill / --elev-flat / --elev-ring / --motion-base
+- docs/UIUX.md 同步上述全部改动，并在 §10 增加 Token 双向一致约束
+
+验证：71 单测 + 15 E2E = 86 项全绿

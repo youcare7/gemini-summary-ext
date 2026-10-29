@@ -107,7 +107,7 @@ HARPA 官方欢迎页把模型连接放在顶部 `MODELS`，提供 API Section �
 布局约束：
 
 - body 总宽固定 320px，包含 padding；内容宽 288px，页面 padding 16px。
-- 区块间距 16px，组内间距 8px 或 12px，所有间距来自 4px 网格。
+- 区块间距：主视图 12px，设置视图 24px，卡片内边距 16px，组内间距 8px；所有间距来自 4px 网格。
 - 常规内容不需要卡片嵌套。原文与结果各保留一个 1px 边界即可。
 - 弹窗最大内容高度建议 560px，超出时 popup 内部纵向滚动；不出现横向滚动。
 - Chrome 官方规定 action popup 会自动适应内容，尺寸需在 25×25 到 800×600px 之间。[Action API](https://developer.chrome.com/docs/extensions/reference/action/)
@@ -233,6 +233,7 @@ Chrome Storage API 区分 `remove()` 的单项移除与 `clear()` 的全区清�
   --meta: oklch(46% 0.012 230);
   --border: oklch(88% 0.008 220);
   --border-soft: oklch(93% 0.005 220);
+  --border-control: color-mix(in oklab, var(--border) 55%, var(--fg-2) 45%);
 
   --accent: oklch(45% 0.09 185);
   --accent-on: oklch(100% 0 0);
@@ -255,10 +256,9 @@ Chrome Storage API 区分 `remove()` 的单项移除与 `clear()` 的全区清�
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-md: 1rem;
-  --text-lg: 1.125rem;
   --leading-body: 1.55;
+  --leading-relaxed: 1.7;
   --leading-tight: 1.3;
-  --weight-read: 400;
   --weight-emphasize: 510;
   --weight-announce: 590;
 
@@ -268,18 +268,12 @@ Chrome Storage API 区分 `remove()` 的单项移除与 `clear()` 的全区清�
   --space-4: 16px;
   --space-5: 20px;
   --space-6: 24px;
-  --space-8: 32px;
 
   --radius-sm: 4px;
   --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-pill: 9999px;
 
-  --elev-flat: none;
-  --elev-ring: 0 0 0 1px var(--border);
   --focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
   --motion-fast: 150ms;
-  --motion-base: 200ms;
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
 
   --popup-width: 320px;
@@ -336,7 +330,8 @@ Chrome Storage API 区分 `remove()` 的单项移除与 `clear()` 的全区清�
 ### 9.4 动效与组件状态
 
 - 只使用 150ms 颜色、边框和透明度过渡；布局变化不超过 200ms。
-- 支持 `prefers-reduced-motion: reduce`：关闭骨架位移、旋转和非必要过渡，保留文字状态。
+- 循环型加载指示（骨架屏）是唯一的往复动画例外：仅透明度在 1 与 0.72 之间往返，周期 1.6s，不位移、不旋转。
+- 支持 `prefers-reduced-motion: reduce`：关闭骨架往复和非必要过渡，保留全部文字状态。
 - 按钮覆盖 Default、Hover、Focus、Active、Disabled、Loading；输入框另覆盖 Error；任务区覆盖 Empty、Error、Populated、Edge 和 Success。
 - Loading 时防重复提交；Disabled 不能只用透明度表达，也保留可理解的禁用原因。
 - 复制成功采用结果旁文字反馈，不使用遮挡内容的 toast。
@@ -345,12 +340,14 @@ Chrome Storage API 区分 `remove()` 的单项移除与 `clear()` 的全区清�
 
 1. 继续使用原生 HTML、CSS、JavaScript；主视图和设置视图可用两个 `section` 切换，不引入前端框架。
 2. 颜色、字号、间距、圆角、焦点和动效只消费 Token；组件样式不写裸颜色。
-3. 模式、任务状态、结果来源和错误类别使用明确状态机，避免多个布尔值拼出互相矛盾的 UI。
-4. 每次任务绑定来源标签、原文、模式、翻译方向和请求 ID。旧响应不得覆盖新任务。
-5. 选中文本和模型输出按文本安全渲染，不直接注入不可信 `innerHTML`。
-6. 弹窗重开后的任务恢复由架构确定存储与消息机制；UI 必须能表现“恢复中”“可继续查看”“需重新提交”。
-7. MVP 不加入深色主题、历史记录、快捷键设置、自定义提示词、多模型、多语言和持久保存 Key。
-8. 实机验收至少覆盖：无划词、未配置、保存、清除、三种模式成功、取消、超时、离线、认证失败、无权限、限流、异常响应、10,000 字边界、弹窗关闭重开、键盘全流程、200% 缩放和 reduced-motion。
+3. Token 与 `styles/popup.css` 必须双向一致：本文档定义的每个 Token 都在样式表中被引用，样式表中不存在文档之外的 Token。
+4. 容器卡片边界用 `--border-soft`，交互控件边界用 `--border-control`（实测对比度 ≥3:1）。
+5. 模式、任务状态、结果来源和错误类别使用明确状态机，避免多个布尔值拼出互相矛盾的 UI。
+6. 每次任务绑定来源标签、原文、模式、翻译方向和请求 ID。旧响应不得覆盖新任务。
+7. 选中文本和模型输出按文本安全渲染，不直接注入不可信 `innerHTML`。
+8. 弹窗重开后的任务恢复由架构确定存储与消息机制；UI 必须能表现“恢复中”“可继续查看”“需重新提交”。
+9. MVP 不加入深色主题、历史记录、快捷键设置、自定义提示词、多模型、多语言和持久保存 Key。
+10. 实机验收至少覆盖：无划词、未配置、保存、清除、三种模式成功、取消、超时、离线、认证失败、无权限、限流、异常响应、10,000 字边界、弹窗关闭重开、键盘全流程、200% 缩放和 reduced-motion。
 
 ## 11. 外部来源
 

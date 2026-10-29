@@ -177,7 +177,7 @@ gemini-summary-ext/
 ├── background.js              # Service Worker 装配入口
 ├── popup.html / popup.js      # 弹窗入口
 ├── styles/popup.css           # Design Token + 样式
-├── assets/icons/              # Lucide 本地 SVG + 许可
+├── assets/icons/              # Lucide 本地 SVG + 工具栏 PNG 图标（16/32/48/128）+ 许可
 ├── src/
 │   ├── background/            # controller / menu / message-router
 │   ├── services/              # prompt-builder / analysis-service / result-validator / error-mapping
@@ -190,6 +190,7 @@ gemini-summary-ext/
 │   ├── unit/                  # 单元测试（71 例）
 │   ├── e2e/                   # Playwright E2E（15 例）
 │   └── live/                  # 真实 API 冒烟（默认跳过）
+├── scripts/                   # 打包 / 图标生成 / 截图（手动运行，不进测试套件）
 ├── package.json
 └── README.md
 ```

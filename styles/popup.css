@@ -1,6 +1,8 @@
 /* Gemini 速审助手 — 弹窗样式
    规范：UIUX §7 Design Token。原始颜色只定义在 Token 层，组件禁止裸色值。
-   禁止渐变、毛玻璃、大阴影；动效仅颜色/边框/透明度 150ms。 */
+   禁止渐变、毛玻璃、大阴影；过渡仅颜色/边框/透明度 150ms。
+   例外：循环型加载指示（骨架屏 .skeleton）允许仅透明度的往复动画，
+   周期 1.6s，在 prefers-reduced-motion 下由文件末尾规则整体关闭。 */
 
 :root {
   color-scheme: light;
@@ -14,6 +16,9 @@
   --meta: oklch(46% 0.012 230);
   --border: oklch(88% 0.008 220);
   --border-soft: oklch(93% 0.005 220);
+  /* 交互控件专用边框：由 border 与 fg-2 混合而来，白底上约 3.1:1，
+     满足 UIUX §10「控件边界 ≥ 3:1」。容器卡片仍用 --border-soft。 */
+  --border-control: color-mix(in oklab, var(--border) 55%, var(--fg-2) 45%);
 
   --accent: oklch(45% 0.09 185);
   --accent-on: oklch(100% 0 0);
@@ -36,10 +41,9 @@
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-md: 1rem;
-  --text-lg: 1.125rem;
   --leading-body: 1.55;
+  --leading-relaxed: 1.7;
   --leading-tight: 1.3;
-  --weight-read: 400;
   --weight-emphasize: 510;
   --weight-announce: 590;
 
@@ -49,18 +53,12 @@
   --space-4: 16px;
   --space-5: 20px;
   --space-6: 24px;
-  --space-8: 32px;
 
   --radius-sm: 4px;
   --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-pill: 9999px;
 
-  --elev-flat: none;
-  --elev-ring: 0 0 0 1px var(--border);
   --focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
   --motion-fast: 150ms;
-  --motion-base: 200ms;
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
 
   --popup-width: 320px;
@@ -122,14 +120,20 @@ p {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-5);
 }
 
+/* 主流程（模式 → 翻译方向 → 原文 → 按钮）是一条连续操作链，用较紧的 12px；
+   设置页是三张彼此独立的卡片，需要更强的分块感，用 24px。 */
 #view-main,
 #view-settings {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-3);
+}
+
+#view-settings {
+  gap: var(--space-6);
 }
 
 [hidden] {
@@ -181,6 +185,15 @@ button:disabled {
   border-color: var(--border-soft);
 }
 
+/* 空态（无划词）主按钮：不填充，用虚线占位表示「待填内容」，
+   与就绪态的实心强调色形成形态差，而不只是明度差。
+   button 基类已预留 1px 透明边框，此处改 dashed 不产生布局位移。 */
+.btn-primary:disabled {
+  background: transparent;
+  border: 1px dashed var(--border);
+  color: var(--meta);
+}
+
 .icon-btn {
   display: inline-flex;
   align-items: center;
@@ -193,7 +206,7 @@ button:disabled {
   border-color: transparent;
 }
 
-.icon-btn:hover {
+.icon-btn:hover:not(:disabled) {
   background: var(--surface-subtle);
   color: var(--fg);
 }
@@ -211,7 +224,7 @@ button:disabled {
   font-weight: var(--weight-emphasize);
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   background: var(--accent-hover);
 }
 
@@ -228,10 +241,10 @@ button:disabled {
   padding: var(--space-2) var(--space-3);
   background: var(--surface);
   color: var(--fg-2);
-  border-color: var(--border);
+  border-color: var(--border-control);
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover:not(:disabled) {
   background: var(--surface-subtle);
   color: var(--fg);
 }
@@ -248,7 +261,7 @@ button:disabled {
   border-color: var(--danger);
 }
 
-.btn-danger:hover {
+.btn-danger:hover:not(:disabled) {
   background: var(--danger-soft);
 }
 
@@ -297,13 +310,6 @@ button:disabled {
   min-width: 0;
 }
 
-.mode-option input {
-  position: absolute;
-  opacity: 0;
-  width: 1px;
-  height: 1px;
-}
-
 .mode-box {
   display: flex;
   align-items: center;
@@ -311,7 +317,7 @@ button:disabled {
   gap: var(--space-1);
   min-height: var(--control-height);
   padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-md);
   background: var(--surface);
   color: var(--fg-2);
@@ -331,6 +337,7 @@ button:disabled {
 
 .mode-option:hover input:not(:checked) + .mode-box {
   border-color: var(--accent);
+  background: var(--accent-soft);
   color: var(--fg);
 }
 
@@ -353,7 +360,7 @@ input[type="password"],
 input[type="text"] {
   min-height: var(--control-height);
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-md);
   background: var(--surface);
   color: var(--fg);
@@ -361,17 +368,13 @@ input[type="text"] {
   font-size: var(--text-sm);
 }
 
+/* 悬停只加深边界，不换成强调色 —— 强调色每屏限两处（当前模式 + 主按钮）。 */
 select:hover,
 input:hover {
-  border-color: var(--accent);
+  border-color: var(--fg-2);
 }
 
 .hint {
-  font-size: var(--text-xs);
-  color: var(--meta);
-}
-
-.privacy-hint {
   font-size: var(--text-xs);
   color: var(--meta);
 }
@@ -382,7 +385,7 @@ input:hover {
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-md);
   background: var(--surface);
-  padding: var(--space-3);
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -395,11 +398,15 @@ input:hover {
   gap: var(--space-2);
 }
 
+/* 卡片标签：靠字重（510）与微字距区分于正文说明（400），而不是靠字号 ——
+   两者都是 12px，靠字号拉不开层级。margin 必须为 0：容器已是 flex + gap，
+   h2 基础规则的 margin-bottom 会叠加成双倍间距。 */
 .source-head h2 {
   margin: 0;
   font-size: var(--text-xs);
   color: var(--meta);
-  font-weight: var(--weight-read);
+  font-weight: var(--weight-emphasize);
+  letter-spacing: 0.02em;
 }
 
 .source-empty {
@@ -412,13 +419,14 @@ input:hover {
   color: var(--fg-2);
   overflow-wrap: anywhere;
   white-space: pre-wrap;
-  max-height: 44px;
+  /* 折叠态保留完整 3 行：高度取字号×行高的整数倍，避免出现半行残缺字形。 */
+  max-height: calc(var(--text-xs) * var(--leading-body) * 3);
   overflow-y: hidden;
   margin: 0;
 }
 
 .source-text.expanded {
-  max-height: 120px;
+  max-height: calc(var(--text-xs) * var(--leading-body) * 6);
   overflow-y: auto;
 }
 
@@ -430,20 +438,28 @@ input:hover {
   color: var(--muted);
 }
 
+/* 无状态文案时不占一行，避免空态下多出约 17px 死空间加上下两处 gap。 */
+.status:empty {
+  min-height: 0;
+}
+
+/* 容器卡片统一用 --border-soft；--border 与 --border-control 留给交互控件。 */
 .result {
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-soft);
   border-radius: var(--radius-md);
   background: var(--surface);
-  padding: var(--space-3);
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
 }
 
 .result-heading {
+  margin: 0;
   font-size: var(--text-xs);
   color: var(--meta);
-  font-weight: var(--weight-read);
+  font-weight: var(--weight-emphasize);
+  letter-spacing: 0.02em;
 }
 
 .result-empty {
@@ -470,19 +486,21 @@ input:hover {
   height: var(--space-3);
   border-radius: var(--radius-sm);
   background: var(--surface-subtle);
-  animation: skeleton-pulse 1.2s var(--ease-standard) infinite alternate;
+  animation: skeleton-pulse 1.6s ease-in-out infinite alternate;
 }
 
 .skeleton-short {
   width: 60%;
 }
 
+/* 往复动画必须用对称曲线（ease-in-out）；ease-out 在往返里不对称，会像"心跳顿一下"。
+   周期拉长到 1.6s、幅度收到 1→0.72，从"闪"变成"呼吸"。 */
 @keyframes skeleton-pulse {
   from {
     opacity: 1;
   }
   to {
-    opacity: 0.55;
+    opacity: 0.72;
   }
 }
 
@@ -506,7 +524,7 @@ input:hover {
 .result-success {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
 .result-meta {
@@ -514,11 +532,19 @@ input:hover {
   color: var(--meta);
 }
 
+/* 摘要是一列「- 要点」的裸文本流，markdown 语义级排版需要改渲染逻辑，
+   这里只能把整块文字排好：行高 1.7 让要点之间自然呼吸，
+   text-wrap/line-break 控制中文断行，border-top 把元信息与正文分区。 */
 .result-output {
   font-size: var(--text-sm);
   color: var(--fg);
+  line-height: var(--leading-relaxed);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  text-wrap: pretty;
+  line-break: strict;
+  border-top: 1px solid var(--border-soft);
+  padding-top: var(--space-3);
 }
 
 .findings {
@@ -622,6 +648,10 @@ input:hover {
   color: var(--success);
 }
 
+.copy-feedback:empty {
+  display: none;
+}
+
 /* ---------- 设置视图 ---------- */
 
 .settings-block {
@@ -631,7 +661,7 @@ input:hover {
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-md);
   background: var(--surface);
-  padding: var(--space-3);
+  padding: var(--space-4);
 }
 
 .key-row {
@@ -670,7 +700,7 @@ input:hover {
   padding: 0;
   margin: -1px;
   overflow: hidden;
-  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
 }
