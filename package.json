@@ -8,10 +8,12 @@
     "test": "npm run test:unit && npm run test:e2e",
     "test:unit": "node --test \"tests/unit/*.test.js\"",
     "test:e2e": "playwright test",
+    "test:screenshots": "playwright test --config playwright.shots.config.js",
     "test:live": "node --test \"tests/live/*.test.js\"",
     "pack": "node scripts/pack.js"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
     "@playwright/test": "1.64.1",
     "lucide-static": "1.61.0"
   }

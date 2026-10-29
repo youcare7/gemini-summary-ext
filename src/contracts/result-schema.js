@@ -1,6 +1,9 @@
 // 结果 Schema（Spec §9.3 / openapi.yaml AnalysisResult）：
 // 三种模式共用一个严格校验的传输形状，发送给 Gemini 作为 structured output 的 schema。
 
+/** 安全审查必须保留的固定免责声明（提示词与客户端校验共用，避免文案漂移）。 */
+export const SECURITY_DISCLAIMER = '基于所选文本的辅助判断，不构成安全保证。';
+
 /** Finding 的 JSON Schema（安全审查条目）。 */
 export const FINDING_SCHEMA = Object.freeze({
   type: 'object',
@@ -11,7 +14,7 @@ export const FINDING_SCHEMA = Object.freeze({
     category: { type: 'string' },
     evidence: {
       type: 'string',
-      description: '来自输入的短引文，必须与原文完全一致；没有可引用依据时为空字符串。',
+      description: '来自输入的短引文，必须与原文完全一致；仅 info 级信息提示允许空字符串，low/medium/high 必须非空。',
     },
     recommendation: { type: 'string' },
   },

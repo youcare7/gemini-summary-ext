@@ -204,7 +204,7 @@ components:
           type: string
         evidence:
           type: string
-          description: A short verbatim quote from the selected input, or an empty string when no evidence exists.
+          description: A short verbatim quote from the selected input. Empty only for info-level notices; low/medium/high findings require a non-empty quote.
         recommendation:
           type: string
     ErrorResponse:

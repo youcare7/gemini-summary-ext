@@ -32,7 +32,7 @@ test('伪造 evidence（非原文子串）判整个结果无效', () => {
   assert.equal(r.reason, 'evidence_not_in_source');
 });
 
-test('evidence 为空字符串表示无原文依据，允许', () => {
+test('仅 info 级信息提示允许空 evidence', () => {
   const result = {
     mode: 'security',
     output: '无法判断。基于所选文本的辅助判断，不构成安全保证。',
@@ -40,6 +40,29 @@ test('evidence 为空字符串表示无原文依据，允许', () => {
   };
   const r = validateResult(result, { mode: 'security', sourceText: SOURCE });
   assert.equal(r.ok, true);
+});
+
+test('非 info 风险结论缺少 evidence 判整个结果无效', () => {
+  for (const severity of ['low', 'medium', 'high']) {
+    const result = {
+      mode: 'security',
+      output: '存在风险。基于所选文本的辅助判断，不构成安全保证。',
+      findings: [{ severity, category: '凭据诱导', evidence: '', recommendation: '建议核实。' }],
+    };
+    const r = validateResult(result, { mode: 'security', sourceText: SOURCE });
+    assert.equal(r.ok, false, `${severity} 不应允许空 evidence`);
+    assert.equal(r.reason, 'evidence_required');
+  }
+});
+
+test('安全审查缺少固定免责声明判整个结果无效', () => {
+  const result = {
+    ...validSecurity,
+    output: '该文本存在风险，但模型没有保留要求的免责声明。',
+  };
+  const r = validateResult(result, { mode: 'security', sourceText: SOURCE });
+  assert.equal(r.ok, false);
+  assert.equal(r.reason, 'missing_security_disclaimer');
 });
 
 test('缺字段判无效', () => {

@@ -1,7 +1,7 @@
 // 结果校验（Spec §9.3）：结构化输出降低格式波动，不等于事实正确。
 // 客户端仍需 JSON.parse、字段类型、长度、枚举和 evidence 子串校验。
 
-import { SEVERITIES } from '../contracts/result-schema.js';
+import { SEVERITIES, SECURITY_DISCLAIMER } from '../contracts/result-schema.js';
 
 const MODES = ['summary', 'security', 'translate'];
 const MAX_OUTPUT_LENGTH = 12000;
@@ -58,6 +58,11 @@ export function validateResult(parsed, { mode, sourceText }) {
     if (bad) return { ok: false, reason: bad };
   }
 
+  // 免责声明不能只靠提示词约束；缺失时判失败，不替模型补写后伪装成功。
+  if (mode === 'security' && !output.includes(SECURITY_DISCLAIMER)) {
+    return { ok: false, reason: 'missing_security_disclaimer' };
+  }
+
   return {
     ok: true,
     result: {
@@ -90,7 +95,11 @@ function validateFinding(finding, sourceText) {
   if (typeof recommendation !== 'string' || recommendation.trim() === '' || recommendation.length > MAX_RECOMMENDATION_LENGTH) {
     return 'bad_recommendation';
   }
-  // evidence 必须是原文子串；空字符串表示无原文依据，允许。虚构依据直接判整个结果无效。
+  // 非 info 风险结论必须有可核对的原文依据；仅 info 允许空 evidence 表示信息提示。
+  if (severity !== 'info' && evidence.trim() === '') {
+    return 'evidence_required';
+  }
+  // 所有非空 evidence 必须是原文精确子串；虚构依据直接判整个结果无效。
   if (evidence !== '' && !sourceText.includes(evidence)) {
     return 'evidence_not_in_source';
   }

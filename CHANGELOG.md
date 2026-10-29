@@ -4,7 +4,16 @@
 
 ## [未发布]
 
+### 新增
+- 安全硬约束：非 info 级 finding 必须有非空原文 evidence；security 输出必须含固定免责声明，违反即判整个结果失败
+- 真实 API 评估集：7 个固定用例、最小冒烟与可选 10,000 字符边界；默认跳过，脱敏记录见 `docs/LIVE-EVALUATION.md`
+- E2E 接入 axe-core，覆盖空态、设置页和安全结果页的 WCAG 自动扫描
+- GitHub Actions：离线测试、截图重生成、ZIP 打包、SHA-256 与构建 artifact
+- AC-17 安全硬约束验收标准；新增 2 项单测与 1 项 E2E
+
 ### 变更
+- 强调色切换为 Google 蓝（`oklch(54% 0.2 264)`），工具栏图标与 README 截图同步更新
+- 容器卡片使用 10px 圆角，icon 按钮 hover 改为 8% 前景状态层
 - 新增工具栏应用图标：16/32/48/128 PNG，`manifest.json` 补 `icons` 与 `action.default_icon`、`default_title`。此前工具栏显示灰色拼图占位
 - 视觉层级重排：标题下边距 16→20px，主视图区块间距 16→12px，设置视图 24px，三处卡片内边距统一 16px
 - 新增 `--border-control`，交互控件边界对比度由 1.43:1 提升到 3.11:1，满足 WCAG 2.2 对控件边界 3:1 的要求

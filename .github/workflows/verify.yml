@@ -1,0 +1,53 @@
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run offline unit and E2E tests
+        run: npm test
+
+      - name: Regenerate UI screenshots
+        run: npm run test:screenshots
+
+      - name: Package extension
+        run: npm run pack
+
+      - name: Generate SHA-256 checksum
+        working-directory: dist
+        run: sha256sum gemini-summary-ext-*.zip > SHA256SUMS
+
+      - name: Upload package and screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: gemini-summary-ext-${{ github.sha }}
+          path: |
+            dist/*.zip
+            dist/SHA256SUMS
+            assets/screenshots/*.png
+          if-no-files-found: error
+          retention-days: 14

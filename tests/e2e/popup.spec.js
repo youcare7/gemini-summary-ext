@@ -1,5 +1,6 @@
 // 扩展 E2E：主流程、BYOK、三模式、错误分类、XSS 纯渲染、边界、失效、离线演示。
 // 网络全部用 context.route 拦截 Mock，默认不访问真实 Gemini API，测试 Key 为明显虚构值。
+import AxeBuilder from '@axe-core/playwright';
 import { test, expect, seedSelection, openPopup, mockGemini } from './fixtures.js';
 import { INPUTS, DEMO_TEXT, makeLongText } from '../fixtures/inputs.js';
 import {
@@ -24,12 +25,29 @@ function pickMode(page, labelText) {
   return page.locator('label.mode-option', { hasText: labelText }).click();
 }
 
+async function expectAccessible(page) {
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
+    .analyze();
+  const violations = results.violations.map((v) => ({
+    id: v.id,
+    impact: v.impact,
+    nodes: v.nodes.map((n) => n.target),
+  }));
+  expect(violations).toEqual([]);
+}
+
 test('空态：无划词时给出操作指引，主按钮禁用，a11y 基线', async ({ context, extensionId }) => {
   const page = await openPopup(context, extensionId);
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN');
   await expect(page.locator('h1')).toHaveText('Gemini 速审助手');
   await expect(page.locator('#source-empty')).toContainText('还没有选中文本');
   await expect(page.locator('#btn-primary')).toBeDisabled();
+  await expectAccessible(page);
+
+  await page.locator('#btn-settings').click();
+  await expect(page.locator('h1')).toHaveText('设置');
+  await expectAccessible(page);
 });
 
 test('AC-01：未配置 Key 点分析只提示配置，零网络请求', async ({ context, extensionId, serviceWorker }) => {
@@ -99,6 +117,7 @@ test('AC-06/07：安全审查渲染固定小节与不确定性表述', async ({ 
   await expect(page.locator('#result-output')).toContainText('不构成安全保证');
   await expect(page.locator('#result-findings .finding')).toHaveCount(3);
   await expect(page.locator('#result-findings')).toContainText('原文依据：输入您的账号密码与短信验证码完成身份核验');
+  await expectAccessible(page);
 });
 
 test('AC-10：403 显示分类原因与下一步，不伪造成功', async ({ context, extensionId, serviceWorker }) => {
@@ -238,6 +257,22 @@ test('AC-10：非法响应不伪造成功（MALFORMED_RESPONSE）', async ({ con
   await page.locator('#btn-primary').click();
   await expect(page.locator('#result-error')).toBeVisible({ timeout: 15_000 });
   await expect(page.locator('#error-message')).toContainText('无法识别');
+  await expect(page.locator('#result-success')).toBeHidden();
+});
+
+test('安全硬约束：缺失免责声明时判失败，不展示成功结果', async ({ context, extensionId, serviceWorker }) => {
+  await mockGemini(context, () => ({
+    status: 200,
+    body: wrapResult({ ...validSecurity, output: '存在风险，但这里没有固定免责声明。' }),
+  }));
+  await seedSelection(serviceWorker, INPUTS.securityPhishing);
+  const page = await openPopup(context, extensionId);
+  await saveFakeKey(page);
+  await pickMode(page, '安全审查');
+
+  await page.locator('#btn-primary').click();
+  await expect(page.locator('#result-error')).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator('#error-message')).toContainText('missing_security_disclaimer');
   await expect(page.locator('#result-success')).toBeHidden();
 });
 

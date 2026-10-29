@@ -3,7 +3,7 @@
 > Chrome 划词速审扩展——对选中文本执行摘要、安全审查辅助或中英翻译。  
 > BYOK 自带 Key，结果可核对，失败不伪装，隐私边界清晰。
 
-![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue) ![Chrome 127+](https://img.shields.io/badge/Chrome-127%2B-green) ![Tests 86/86](https://img.shields.io/badge/Tests-86%2F86-brightgreen) ![Version](https://img.shields.io/badge/version-0.9.0--preview-orange)
+![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue) ![Chrome 127+](https://img.shields.io/badge/Chrome-127%2B-green) ![Tests 89/89](https://img.shields.io/badge/Tests-89%2F89-brightgreen) ![Version](https://img.shields.io/badge/version-0.9.0--preview-orange)
 
 ---
 
@@ -13,7 +13,7 @@
 
 | 项 | 状态 | 说明 |
 |---|---|---|
-| 扩展加载与 UI 流程 | ✅ 已验证 | 86 项自动化测试全绿（单测 71 + E2E 15） |
+| 扩展加载与 UI 流程 | ✅ 已验证 | 89 项自动化测试全绿（单测 73 + E2E 16），含 axe 无障碍扫描 |
 | 三模式提示词与结果校验 | ✅ 已验证 | Mock 响应下全路径通过 |
 | BYOK 会话存储与清除 | ✅ 已验证 | 仅 `chrome.storage.session`，测试覆盖 |
 | 错误分类（401/403/404/429/超时/网络/格式） | ✅ 已验证 | Mock 响应下分类正确，不伪造成功 |
@@ -153,10 +153,15 @@ npm test                         # 运行全部测试（离线，无需真实 Ke
 | 测试类型 | 命令 | 覆盖范围 |
 |---------|------|---------|
 | 单元测试 | `npm run test:unit` | 提示词三模式、结果校验、错误映射、输入边界、API 契约、存储、源码卫生（零 console / 零 innerHTML） |
-| E2E 测试 | `npm run test:e2e` | BYOK 流程、三模式、错误分类、XSS 渲染、离线演示、取消 |
-| 真实冒烟 | `npm run test:live` | 真实 API 调用（默认跳过，需 `RUN_LIVE_GEMINI=1` + `GEMINI_API_KEY`） |
+| E2E 测试 | `npm run test:e2e` | BYOK、三模式、安全硬约束、错误分类、XSS、离线演示、取消、axe 无障碍 |
+| 界面截图 | `npm run test:screenshots` | 重新生成主视图、结果页与设置页截图 |
+| 真实评估 | `npm run test:live` | 7 个固定用例 + 最小冒烟 + 可选边界（默认跳过，需 `RUN_LIVE_GEMINI=1` + `GEMINI_API_KEY`） |
 
-**测试结果：86/86 通过**（单测 71 + E2E 15）
+**离线测试结果：89/89 通过**（单测 73 + E2E 16）。真实评估集与脱敏记录见 [`docs/LIVE-EVALUATION.md`](docs/LIVE-EVALUATION.md)，当前仍为待执行，不计入通过数。
+
+### CI 与发布产物
+
+`.github/workflows/verify.yml` 在 main 推送、Pull Request 和手动触发时运行离线测试、重生成截图、打包 ZIP 并生成 SHA-256。构建产物以 GitHub Actions artifact 保存 14 天，包含 ZIP、`SHA256SUMS` 和三张界面截图。真实 API 评估不进入 CI，不需要也不记录任何 Key。
 
 ### 人工冒烟清单
 
@@ -187,10 +192,11 @@ gemini-summary-ext/
 │   └── ui/                    # popup-view（状态机）/ popup-render（安全 DOM）
 ├── tests/
 │   ├── fixtures/              # 固定测试样例
-│   ├── unit/                  # 单元测试（71 例）
-│   ├── e2e/                   # Playwright E2E（15 例）
-│   └── live/                  # 真实 API 冒烟（默认跳过）
-├── scripts/                   # 打包 / 图标生成 / 截图（手动运行，不进测试套件）
+│   ├── unit/                  # 单元测试（73 例）
+│   ├── e2e/                   # Playwright E2E（16 例，含 axe）
+│   └── live/                  # 真实 API 评估（9 例，默认跳过）
+├── scripts/                   # 打包 / 图标生成 / 截图脚本
+├── .github/workflows/         # 离线测试、打包、SHA-256 与 artifact
 ├── package.json
 └── README.md
 ```
@@ -205,7 +211,7 @@ gemini-summary-ext/
 | 平台 | Manifest V3 | Chrome 扩展当前标准 |
 | API | Gemini Interactions API | 2026-06 起官方默认接口 |
 | 存储 | `chrome.storage.session` | 敏感数据不落盘 |
-| 测试 | `node:test` + Playwright | 零依赖单测 + 真实浏览器 E2E |
+| 测试 | `node:test` + Playwright + axe-core | 离线单测、真实浏览器 E2E 与 WCAG 自动扫描 |
 | 图标 | Lucide 本地 SVG | 统一描边，无运行时 |
 
 ---

@@ -285,7 +285,7 @@ Interactions API 自 2026 年 6 月 GA 并被官方推荐给新项目；`generat
     {
       "severity": "info | low | medium | high",
       "category": "风险类别",
-      "evidence": "来自输入的短引文；没有则为空字符串",
+      "evidence": "来自输入的精确短引文；仅 info 信息提示允许为空",
       "recommendation": "可执行建议"
     }
   ]
@@ -293,11 +293,11 @@ Interactions API 自 2026 年 6 月 GA 并被官方推荐给新项目；`generat
 ```
 
 - `mode`、`output`、`findings` 必填；摘要与翻译的 `findings` 必须为空数组。
-- 安全审查只允许 `security` 模式返回 findings；`evidence` 必须能在原文中找到，否则该条结果判为无效，不展示虚构依据。
-- 安全结果固定附带“基于所选文本的辅助判断，不构成安全保证”；没有足够证据时要求输出“无法判断”，不得给出“绝对安全”。
+- 安全审查只允许 `security` 模式返回 findings；所有非空 `evidence` 必须是原文精确子串，非 info 级 finding 的 evidence 还必须非空。违反任一条件判整个结果无效，不展示虚构或无依据的风险结论。
+- 安全结果必须包含固定免责声明“基于所选文本的辅助判断，不构成安全保证。”；客户端强制校验，缺失时判失败而不是补写。没有足够证据时要求输出“无法判断”，不得给出“绝对安全”。
 - 翻译至少支持 `zh-CN` 与 `en`，完整译文放 `output`，保留原有段落语义。
 - 选中文本始终作为不可信数据引用，不能覆盖系统指令；不启用工具，因此文本中的“调用工具/访问网址”不会被执行。
-- 客户端仍需 `JSON.parse`、字段类型、长度、枚举和 evidence 校验。结构化输出降低格式波动，不等于事实正确。
+- 客户端仍需 `JSON.parse`、字段类型、长度、枚举、evidence 和固定免责声明校验。结构化输出降低格式波动，不等于事实正确。
 
 ### 9.4 响应提取
 
@@ -436,7 +436,7 @@ E2E 使用 Playwright `context.route` 拦截 Service Worker 发往 Gemini 主机
 - 摘要、安全审查、中译英、英译中各一个固定输入。
 - 空文本、12,000 边界、超长文本、换行与 Unicode。
 - 缺少 Key、401、两类 403、404、429、500、503、超时、断网、取消和旧响应覆盖新响应。
-- `steps` 缺失、无 model_output、无 text、非法 JSON、字段缺失、伪造 evidence。
+- `steps` 缺失、无 model_output、无 text、非法 JSON、字段缺失、伪造 evidence、非 info 级空 evidence、缺失固定免责声明。
 - 含 HTML 的模型结果显示为文本；含提示注入的原文不改变任务、不触发工具。
 - API 失败时不出现 Mock 成功结果；本地演示始终有非 Gemini 标识。
 
