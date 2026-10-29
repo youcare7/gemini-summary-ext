@@ -13,7 +13,7 @@ const iconsDir = path.resolve('assets/icons');
 if (!fs.existsSync(iconsDir)) fs.mkdirSync(iconsDir, { recursive: true });
 
 // 主色取 styles/popup.css 的 --accent 原值；圆角 = 边长 22%
-const ACCENT = 'oklch(45% 0.09 185)';
+const ACCENT = 'oklch(54% 0.2 264)';
 const RADIUS_PCT = 22;
 
 const fileTextSvg = fs.readFileSync(path.join(iconsDir, 'file-text.svg'), 'utf8');

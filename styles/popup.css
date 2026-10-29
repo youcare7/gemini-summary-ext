@@ -20,11 +20,13 @@
      满足 UIUX §10「控件边界 ≥ 3:1」。容器卡片仍用 --border-soft。 */
   --border-control: color-mix(in oklab, var(--border) 55%, var(--fg-2) 45%);
 
-  --accent: oklch(45% 0.09 185);
+  /* 强调色：Google 蓝方向（oklch(54% 0.20 264) ≈ #2f63e1），
+     白底/白字双向对比约 5.26:1，满足 UIUX §7「正文 ≥ 4.5:1」。 */
+  --accent: oklch(54% 0.2 264);
   --accent-on: oklch(100% 0 0);
-  --accent-hover: oklch(40% 0.085 185);
-  --accent-active: oklch(36% 0.08 185);
-  --accent-soft: oklch(95% 0.025 185);
+  --accent-hover: oklch(49% 0.19 264);
+  --accent-active: oklch(44% 0.18 264);
+  --accent-soft: oklch(96% 0.02 264);
 
   --success: oklch(43% 0.11 145);
   --success-soft: oklch(95% 0.025 145);
@@ -56,6 +58,9 @@
 
   --radius-sm: 4px;
   --radius-md: 8px;
+  /* 容器卡片专用圆角：source-block / result / settings-block，
+     形成 4 / 8 / 10 三级圆角语言，不超过 UIUX §7 的 12px 上限。 */
+  --radius-lg: 10px;
 
   --focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
   --motion-fast: 150ms;
@@ -207,7 +212,8 @@ button:disabled {
 }
 
 .icon-btn:hover:not(:disabled) {
-  background: var(--surface-subtle);
+  /* Material state-layer：8% 前景色叠加，替代整块灰底 */
+  background: color-mix(in oklab, var(--fg-2) 8%, transparent);
   color: var(--fg);
 }
 
@@ -383,7 +389,7 @@ input:hover {
 
 .source-block {
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: var(--surface);
   padding: var(--space-4);
   display: flex;
@@ -446,7 +452,7 @@ input:hover {
 /* 容器卡片统一用 --border-soft；--border 与 --border-control 留给交互控件。 */
 .result {
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: var(--surface);
   padding: var(--space-4);
   display: flex;
@@ -659,7 +665,7 @@ input:hover {
   flex-direction: column;
   gap: var(--space-2);
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: var(--surface);
   padding: var(--space-4);
 }

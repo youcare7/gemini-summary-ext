@@ -235,11 +235,11 @@ Chrome Storage API 区分 `remove()` 的单项移除与 `clear()` 的全区清�
   --border-soft: oklch(93% 0.005 220);
   --border-control: color-mix(in oklab, var(--border) 55%, var(--fg-2) 45%);
 
-  --accent: oklch(45% 0.09 185);
+  --accent: oklch(54% 0.2 264);
   --accent-on: oklch(100% 0 0);
-  --accent-hover: oklch(40% 0.085 185);
-  --accent-active: oklch(36% 0.08 185);
-  --accent-soft: oklch(95% 0.025 185);
+  --accent-hover: oklch(49% 0.19 264);
+  --accent-active: oklch(44% 0.18 264);
+  --accent-soft: oklch(96% 0.02 264);
 
   --success: oklch(43% 0.11 145);
   --success-soft: oklch(95% 0.025 145);
@@ -271,6 +271,7 @@ Chrome Storage API 区分 `remove()` 的单项移除与 `clear()` 的全区清�
 
   --radius-sm: 4px;
   --radius-md: 8px;
+  --radius-lg: 10px;
 
   --focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
   --motion-fast: 150ms;
@@ -286,7 +287,8 @@ Chrome Storage API 区分 `remove()` 的单项移除与 `clear()` 的全区清�
 
 - 不请求在线字体，避免增加弹窗加载和离线依赖；字体栈显式指定中文回退。
 - 强调色每屏最多两处主要可见使用：当前模式与主按钮。状态色仅用于对应状态。
-- 按钮圆角 8px，结果容器圆角 8px；不使用彩色左边框，不使用超过 12px 的卡片圆角。
+- 交互控件（按钮、输入框、模式选择块）圆角 8px，容器卡片（source-block / result / settings-block）圆角 10px；不使用彩色左边框，不使用超过 12px 的卡片圆角。
+- 强调色为 Google 蓝方向（`oklch(54% 0.2 264)` ≈ #2f63e1，白底/白字双向对比约 5.26:1）。
 - 所有颜色组合在实现后实测对比度；正文至少 4.5:1，控件边界和焦点指示至少 3:1。[WCAG 2.2](https://www.w3.org/TR/WCAG22/)
 
 ## 8. 图标方案
@@ -305,7 +307,7 @@ Chrome Storage API 区分 `remove()` 的单项移除与 `clear()` 的全区清�
 界面内图标为 SVG，但 Chrome 工具栏与扩展管理页只接受位图，因此单独产出一套 PNG，由 `manifest.json` 的 `icons` 与 `action.default_icon` 指向。
 
 - 尺寸：16 / 32 / 48 / 128。16 与 32 供工具栏（含高 DPI），48 供扩展管理页，128 供商店与安装对话框。
-- 形状：圆角方块，圆角半径取边长 22%；底色用 `--accent` 原值 `oklch(45% 0.09 185)`，前景纯白。
+- 形状：圆角方块，圆角半径取边长 22%；底色用 `--accent` 原值 `oklch(54% 0.2 264)`，前景纯白。
 - 字形：16 / 32 / 48 用三条圆角横条（文本文档的最小可辨识抽象），128 用 Lucide `file-text` 原样描边。
 - 体量对齐按**墨迹占比**而非容器占比：128 的 Lucide 源图形墨迹为 16×20 / 24×24，容器需放大到 69.6% 才能让墨迹本身与小尺寸的 62% 视觉体量一致。
 - 字形内不排文字。16px 下任何字母都会糊成噪点。
