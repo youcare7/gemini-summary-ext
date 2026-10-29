@@ -291,14 +291,25 @@ Chrome Storage API 区分 `remove()` 的单项移除与 `clear()` 的全区清�
 
 ## 8. 图标方案
 
-建议锁定 **Lucide** 一套 SVG 图标，与架构师后续确认后写入技术 Spec。官方提供 Vanilla Web 包、统一设计规则和按需打包能力，适合原生 HTML/CSS/JS，不需要 React。[Lucide 官方说明](https://lucide.dev/guide/)
+图标体系锁定 **Lucide** 一套 SVG。官方提供 Vanilla Web 包、统一设计规则和按需打包能力，适合原生 HTML/CSS/JS，不需要 React。[Lucide 官方说明](https://lucide.dev/guide/)
 
 - 交付方式：优先将实际使用的 SVG 子集随扩展本地打包，不运行时请求 CDN。
 - 尺寸：行内状态 16px，按钮内 20px，独立说明图标 24px。
 - 描边：统一 2px，颜色继承 `currentColor`，不混用其他图标库。
-- 建议子集：`Settings`、`ArrowLeft`、`Copy`、`Check`、`Eye`、`EyeOff`、`Trash2`、`FileText`、`ShieldAlert`、`Languages`、`CircleAlert`、`LoaderCircle`、`X`。
+- 实际子集（16 个，均本地静态）：`Settings`、`ArrowLeft`、`Copy`、`Check`、`Eye`、`EyeOff`、`Trash2`、`FileText`、`ShieldAlert`、`Languages`、`CircleAlert`、`LoaderCircle`、`X`、`KeyRound`、`Play`、`Square`。`Play` 与 `Square` 对应主按钮的执行与取消态。
 - 设置、复制、清除等纯图标按钮必须有可访问名称；装饰性 SVG 使用 `aria-hidden="true"`。
 - 不使用 emoji 代替图标。离线演示、成功、警告也使用文字与同一套 SVG。
+
+### 8.1 扩展应用图标（工具栏）
+
+界面内图标为 SVG，但 Chrome 工具栏与扩展管理页只接受位图，因此单独产出一套 PNG，由 `manifest.json` 的 `icons` 与 `action.default_icon` 指向。
+
+- 尺寸：16 / 32 / 48 / 128。16 与 32 供工具栏（含高 DPI），48 供扩展管理页，128 供商店与安装对话框。
+- 形状：圆角方块，圆角半径取边长 22%；底色用 `--accent` 原值 `oklch(45% 0.09 185)`，前景纯白。
+- 字形：16 / 32 / 48 用三条圆角横条（文本文档的最小可辨识抽象），128 用 Lucide `file-text` 原样描边。
+- 体量对齐按**墨迹占比**而非容器占比：128 的 Lucide 源图形墨迹为 16×20 / 24×24，容器需放大到 69.6% 才能让墨迹本身与小尺寸的 62% 视觉体量一致。
+- 字形内不排文字。16px 下任何字母都会糊成噪点。
+- 生成方式：`scripts/gen-icons.mjs` 用 Playwright Chromium 按目标像素直接渲染，不做位图缩放，避免尺寸间几何失真。该脚本手动运行，不进测试套件。
 
 ## 9. 响应式、键盘与无障碍验收
 
@@ -329,7 +340,7 @@ Chrome Storage API 区分 `remove()` 的单项移除与 `clear()` 的全区清�
 
 ### 9.4 动效与组件状态
 
-- 只使用 150ms 颜色、边框和透明度过渡；布局变化不超过 200ms。
+- 过渡只作用于颜色、边框与背景，时长 150ms，不做位移、缩放或模糊。
 - 循环型加载指示（骨架屏）是唯一的往复动画例外：仅透明度在 1 与 0.72 之间往返，周期 1.6s，不位移、不旋转。
 - 支持 `prefers-reduced-motion: reduce`：关闭骨架往复和非必要过渡，保留全部文字状态。
 - 按钮覆盖 Default、Hover、Focus、Active、Disabled、Loading；输入框另覆盖 Error；任务区覆盖 Empty、Error、Populated、Edge 和 Success。
