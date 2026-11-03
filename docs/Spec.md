@@ -79,11 +79,11 @@
 | 页面 | 路由 | 核心组件 | 对应 API | 设计 Token 主题 |
 |------|------|----------|---------|----------------|
 | 主视图 | popup.html#main | 模式单选组、翻译方向、原文预览/展开、主按钮、状态区、结果区、复制 | ANALYZE_REQUEST | light |
-| 设置视图 | popup.html#settings | Key 输入（password）、显示/隐藏、保存到会话、清除密钥（内联确认）、离线演示入口、官方 Key 获取链接 | SAVE_KEY / CLEAR_KEY | light |
+| 设置视图 | popup.html#settings | Key 输入（password）、显示/隐藏、保存到会话、清除密钥（内联确认）、风险识别/提示注入/伪造依据拒绝三个离线演示入口、官方 Key 获取链接 | SAVE_KEY / CLEAR_KEY | light |
 
 ## 8. 设计 Token（锁定）
 
-- **主色**：`oklch(45% 0.09 185)`（Google 蓝单色系，无渐变）
+- **主色**：`oklch(54% 0.2 264)`（Google 蓝单色系，无渐变）
 - **危险/成功/警告**：见 UIUX Token 表
 - **字体**：`"Segoe UI Variable", "Noto Sans SC", "Microsoft YaHei", sans-serif`；等宽 `"Cascadia Code", Consolas, monospace`
 - **图标库**：Lucide 本地静态 SVG（16/20/24px，2px stroke，currentColor）
@@ -113,6 +113,8 @@
 | AC-15 | 旧结果 | When 输入或模式改变，系统**必须**将旧结果标记为已失效，不冒充当前结果 | P1 |
 | AC-16 | 安全渲染 | When 模型输出含 HTML/脚本，系统**必须**按纯文本渲染，不执行注入内容 | P0 |
 | AC-17 | 安全硬约束 | If 非 info 级 finding 的 evidence 为空或不是原文精确子串，或 security 输出缺少固定免责声明，系统**必须**判整个结果无效且不展示成功 | P0 |
+| AC-18 | 依据可核对 | While 安全审查结果展示成功，系统**必须**显示 evidence 核验数量，并在用户点击引文时在原文中定位高亮对应文本 | P0 |
+| AC-19 | 可信演示 | When 用户选择提示注入或伪造依据离线样例，系统**必须**明确标注离线来源，不发送网络请求，且不将伪造证据展示为成功结果 | P0 |
 
 ## 10. 边界与约束
 
@@ -120,7 +122,7 @@
 - 超时 30 秒；429/5xx 可重试最多 2 次（指数退避+抖动，总预算 90 秒）；4xx 不自动重试。
 - 同一时刻仅一个活动请求；`requestId` 绑定来源文本/模式/方向，旧响应不覆盖新任务。
 - 弹窗关闭后任务状态存 session，重开可恢复；无法恢复时明确提示重新提交。
-- 不申请 `tabs`/`activeTab`/`scripting`/`cookies`/`webRequest`/`unlimitedStorage`/`content_scripts`/`<all_urls>` 权限。
+- 不申请 `tabs`/`cookies`/`webRequest`/`unlimitedStorage`/`content_scripts`/`<all_urls>` 权限；保留 `activeTab` 与 `scripting`，仅用于弹窗打开时读取活动页当前选中文本。
 - 安全审查不访问 URL、不查信誉、不扫文件；提示语必含不确定性；输出必须包含固定免责声明“基于所选文本的辅助判断，不构成安全保证。”。
 - 非 info 级 finding 必须有非空 evidence 且为原文精确子串；仅 info 信息提示允许空 evidence。无依据时不得生成风险结论。
 - 发布 ZIP 不含 node_modules、测试 profile、trace、环境文件、真实 Key。
@@ -168,3 +170,4 @@ npm test
 | 2026-10-26 | 初版 Spec 生成 | 三文档用户确认 + 三项冲突锁定 | 全项目 |
 | 2026-10-26 | 输入上限锁定 10,000 字符 | 用户决策 | AC-12、测试边界 |
 | 2026-10-26 | Key 仅 session、日志零持久 | 用户决策 | AC-02/03/13、存储矩阵 |
+| 2026-11-03 | 增加依据核验状态、原文定位高亮与三类可信离线演示 | 强化 DevFest 可验证叙事 | AC-11/14/17/18/19、popup UI/演示样例/测试 |

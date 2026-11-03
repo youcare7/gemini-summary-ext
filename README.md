@@ -3,7 +3,7 @@
 > Chrome 划词速审扩展——对选中文本执行摘要、安全审查辅助或中英翻译。  
 > BYOK 自带 Key，结果可核对，失败不伪装，隐私边界清晰。
 
-![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue) ![Chrome 127+](https://img.shields.io/badge/Chrome-127%2B-green) ![Tests 89/89](https://img.shields.io/badge/Tests-89%2F89-brightgreen) ![Version](https://img.shields.io/badge/version-0.9.0--preview-orange)
+![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue) ![Chrome 127+](https://img.shields.io/badge/Chrome-127%2B-green) ![Tests 96/96](https://img.shields.io/badge/Tests-96%2F96-brightgreen) ![Version](https://img.shields.io/badge/version-0.9.0--preview-orange)
 
 ---
 
@@ -13,7 +13,7 @@
 
 | 项 | 状态 | 说明 |
 |---|---|---|
-| 扩展加载与 UI 流程 | ✅ 已验证 | 89 项自动化测试全绿（单测 73 + E2E 16），含 axe 无障碍扫描 |
+| 扩展加载与 UI 流程 | ✅ 已验证 | 96 项自动化测试全绿（单测 77 + E2E 19），含 axe 无障碍扫描 |
 | 三模式提示词与结果校验 | ✅ 已验证 | Mock 响应下全路径通过 |
 | BYOK 会话存储与清除 | ✅ 已验证 | 仅 `chrome.storage.session`，测试覆盖 |
 | 错误分类（401/403/404/429/超时/网络/格式） | ✅ 已验证 | Mock 响应下分类正确，不伪造成功 |
@@ -38,9 +38,29 @@
 
 - **三种触发方式**：右键菜单 / 快捷键 `Ctrl+Shift+S` / 点扩展图标自动捕获
 - **BYOK**：API Key 仅保存到浏览器会话，关浏览器即清除
-- **离线演示**：无 Key 时可体验完整 UI 流程，全程标注"非 Gemini API 结果"
+- **可信防线离线演示**：可演示风险识别、提示注入文本处理，以及伪造 evidence 被拒绝；全程无网络请求
+- **依据可核对**：安全结果显示引文核验数量，点击原文依据可定位并高亮对应选中文本
 - **安全渲染**：模型输出按纯文本展示，含 HTML/脚本也不会执行
 - **零日志**：生产环境不记录原文、Key、请求头或完整响应
+
+---
+
+## 可信处理链路
+
+```text
+选中文本
+  → 输入边界检查
+  → 结构化模型请求
+  → JSON 解析与字段校验
+  → evidence 原文精确匹配 + 固定安全免责声明校验
+  → 纯文本渲染与原文定位高亮
+        ↓ 任一环节失败
+      拒绝展示成功结果，只显示脱敏诊断
+```
+
+结构化输出只降低格式波动，不等于事实正确。本项目把客户端校验作为独立防线：模型返回格式合法但引文不在原文中时，仍判定失败。设置页提供固定的“伪造依据拒绝样例”，无需 Key 或网络即可复现。
+
+演示时始终区分两条路径：真实 API 结果显示实际模型名；离线结果显示“非 Gemini API 结果”，不把固定样例伪装成实时推理。
 
 ---
 
@@ -68,7 +88,7 @@
 
 划选文字 → 选择模式 → 点击主按钮 → 查看结果
 
-![摘要结果（离线演示）](assets/screenshots/02-result-summary.png)
+![风险识别结果（离线演示）](assets/screenshots/02-result-security.png)
 
 ![设置页](assets/screenshots/03-settings.png)
 
@@ -157,7 +177,7 @@ npm test                         # 运行全部测试（离线，无需真实 Ke
 | 界面截图 | `npm run test:screenshots` | 重新生成主视图、结果页与设置页截图 |
 | 真实评估 | `npm run test:live` | 7 个固定用例 + 最小冒烟 + 可选边界（默认跳过，需 `RUN_LIVE_GEMINI=1` + `GEMINI_API_KEY`） |
 
-**离线测试结果：89/89 通过**（单测 73 + E2E 16）。真实评估集与脱敏记录见 [`docs/LIVE-EVALUATION.md`](docs/LIVE-EVALUATION.md)，当前仍为待执行，不计入通过数。
+**离线测试结果：96/96 通过**（单测 77 + E2E 19）。真实评估集与脱敏记录见 [`docs/LIVE-EVALUATION.md`](docs/LIVE-EVALUATION.md)，当前仍为待执行，不计入通过数。
 
 ### CI 与发布产物
 
@@ -189,11 +209,11 @@ gemini-summary-ext/
 │   ├── infrastructure/        # gemini-client / key-store / task-store
 │   ├── contracts/             # messages / result-schema
 │   ├── config/                # defaults.js（模型/上限/超时）、demo-samples.js（离线演示样例）
-│   └── ui/                    # popup-view（状态机）/ popup-render（安全 DOM）
+│   └── ui/                    # popup-view（状态机）/ popup-render（安全 DOM）/ settings-controller（设置交互）/ clipboard（复制兜底）
 ├── tests/
 │   ├── fixtures/              # 固定测试样例
-│   ├── unit/                  # 单元测试（73 例）
-│   ├── e2e/                   # Playwright E2E（16 例，含 axe）
+│   ├── unit/                  # 单元测试（77 例）
+│   ├── e2e/                   # Playwright E2E（19 例，含 axe）
 │   └── live/                  # 真实 API 评估（9 例，默认跳过）
 ├── scripts/                   # 打包 / 图标生成 / 截图脚本
 ├── .github/workflows/         # 离线测试、打包、SHA-256 与 artifact

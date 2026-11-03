@@ -66,7 +66,7 @@
       <svg id="icon-stop" class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><rect width="18" height="18" x="3" y="3" rx="2"/></svg>
       <span id="btn-primary-label">生成摘要</span>
     </button>
-    <p class="hint">点击后仅将当前选中文本发送至 Gemini API。含密码、验证码或私钥时，请取消并重新划选。</p>
+    <p class="hint">仅发送当前选中文本；不读取完整网页、不访问链接、不调用工具。含密码、验证码或私钥时，请取消并重新划选。</p>
 
     <p id="status" class="status" role="status" aria-live="polite" aria-atomic="true"></p>
 
@@ -95,6 +95,7 @@
         <p id="stale-bar" class="stale-bar" hidden>输入或模式已更改，请重新分析。</p>
         <p id="demo-bar" class="demo-bar" hidden>离线演示，非 Gemini API 结果</p>
         <p id="result-meta" class="result-meta"></p>
+        <p id="result-verification" class="verification-bar" hidden></p>
         <p id="result-output" class="result-output"></p>
         <ul id="result-findings" class="findings"></ul>
         <div class="result-actions">
@@ -149,8 +150,12 @@
 
     <div class="settings-block">
       <h2 id="demo-heading">离线演示</h2>
-      <button id="btn-demo" class="btn-secondary" type="button">使用固定样例离线演示</button>
-      <p class="hint">离线演示加载固定样例结果，全程标注"离线演示，非 Gemini API 结果"，不发送任何网络请求。</p>
+      <div class="demo-actions">
+        <button id="btn-demo" class="btn-secondary" type="button">加载风险识别样例</button>
+        <button id="btn-demo-injection" class="btn-secondary" type="button">加载提示注入样例</button>
+        <button id="btn-demo-reject" class="btn-secondary" type="button">加载伪造依据拒绝样例</button>
+      </div>
+      <p class="hint">选择样例后回到主界面点击分析。全程标注离线来源，不发送网络请求；拒绝样例会演示校验失败。</p>
     </div>
   </section>
 

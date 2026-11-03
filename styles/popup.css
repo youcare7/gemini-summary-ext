@@ -436,6 +436,14 @@ input:hover {
   overflow-y: auto;
 }
 
+.evidence-highlight {
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--fg);
+  outline: 1px solid var(--border-control);
+  overflow-wrap: anywhere;
+}
+
 /* ---------- 状态与结果 ---------- */
 
 .status {
@@ -538,6 +546,16 @@ input:hover {
   color: var(--meta);
 }
 
+.verification-bar {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--success);
+  border-radius: var(--radius-sm);
+  background: var(--success-soft);
+  color: var(--success);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-emphasize);
+}
+
 /* 摘要是一列「- 要点」的裸文本流，markdown 语义级排版需要改渲染逻辑，
    这里只能把整块文字排好：行高 1.7 让要点之间自然呼吸，
    text-wrap/line-break 控制中文断行，border-top 把元信息与正文分区。 */
@@ -614,9 +632,26 @@ input:hover {
 }
 
 .finding-evidence {
-  color: var(--muted);
+  min-height: var(--control-height);
+  padding: var(--space-1) 0;
+  border: 0;
+  background: transparent;
+  color: var(--fg-2);
   font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
   overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.finding-evidence:hover {
+  color: var(--fg);
+}
+
+.finding-evidence[aria-pressed="true"] {
+  font-weight: var(--weight-emphasize);
 }
 
 .finding-recommendation {
@@ -668,6 +703,15 @@ input:hover {
   border-radius: var(--radius-lg);
   background: var(--surface);
   padding: var(--space-4);
+}
+
+.demo-actions {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.demo-actions .btn-secondary {
+  width: 100%;
 }
 
 .key-row {

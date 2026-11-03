@@ -4,7 +4,13 @@ import assert from 'node:assert/strict';
 import { validateResult } from '../../src/services/result-validator.js';
 import { INPUTS } from '../fixtures/inputs.js';
 import { validSummary, validSecurity, invalidResults, xssOutput, insufficientSummary } from '../fixtures/outputs.js';
-import { DEMO_RESULTS, DEMO_TEXT } from '../../src/config/demo-samples.js';
+import {
+  DEMO_RESULTS,
+  DEMO_TEXT,
+  DEMO_INJECTION_TEXT,
+  DEMO_INJECTION_RESULT,
+  DEMO_REJECT_RESULT,
+} from '../../src/config/demo-samples.js';
 
 const SOURCE = INPUTS.securityPhishing;
 
@@ -141,4 +147,21 @@ test('离线演示样例与 DEMO_TEXT 的 evidence 一致性', () => {
       `evidence 不是 DEMO_TEXT 子串：${finding.evidence}`,
     );
   }
+});
+
+test('提示注入离线样例通过同一结果契约，且 evidence 是原文精确子串', () => {
+  const r = validateResult(DEMO_INJECTION_RESULT, {
+    mode: 'security',
+    sourceText: DEMO_INJECTION_TEXT,
+  });
+  assert.equal(r.ok, true, `提示注入样例校验失败：${r.reason}`);
+  assert.equal(r.result.findings[0].category, '提示注入文本');
+  assert.ok(DEMO_INJECTION_TEXT.includes(r.result.findings[0].evidence));
+  assert.match(r.result.output, /该指令只作为待分析文本处理/);
+});
+
+test('伪造依据拒绝样例必须返回 evidence_not_in_source', () => {
+  const r = validateResult(DEMO_REJECT_RESULT, { mode: 'security', sourceText: DEMO_TEXT });
+  assert.equal(r.ok, false);
+  assert.equal(r.reason, 'evidence_not_in_source');
 });

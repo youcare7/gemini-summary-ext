@@ -4,7 +4,7 @@
 import { MAX_INPUT, DEFAULT_MODEL } from '../config/defaults.js';
 import { buildRequestBody } from './prompt-builder.js';
 import { validateResult } from './result-validator.js';
-import { buildError, normalizeError } from './error-mapping.js';
+import { buildError, buildValidationError, normalizeError } from './error-mapping.js';
 import { callInteractions, extractModelText } from '../infrastructure/gemini-client.js';
 
 /**
@@ -96,9 +96,7 @@ export async function analyze({
     // 只回传脱敏诊断类别，不回传模型原文
     return {
       ok: false,
-      error: buildError('MALFORMED_RESPONSE', {
-        message: `服务返回的内容无法识别（诊断：${validation.reason}）。下一步：重试；若持续出现请保留该诊断类别。`,
-      }),
+      error: buildValidationError(validation.reason),
     };
   }
 

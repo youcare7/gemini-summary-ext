@@ -1,7 +1,7 @@
 // error-mapping 单测：HTTP/异常 -> 错误类别与用户可读下一步（node:test）。
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { classifyHttpStatus, normalizeError, buildError } from '../../src/services/error-mapping.js';
+import { classifyHttpStatus, normalizeError, buildError, buildValidationError } from '../../src/services/error-mapping.js';
 import { ERROR_KINDS } from '../../src/contracts/messages.js';
 
 test('401 -> INVALID_KEY，不自动重试', () => {
@@ -60,6 +60,24 @@ test('normalizeError：AbortError -> TIMEOUT；未知异常 -> NETWORK', () => {
 test('normalizeError 透传带 kind 的内部错误', () => {
   const e = normalizeError(buildError('MALFORMED_RESPONSE', { status: 200 }));
   assert.equal(e.kind, 'MALFORMED_RESPONSE');
+});
+
+test('结果校验错误：引文缺失与安全声明缺失有明确拒绝文案', () => {
+  const evidence = buildValidationError('evidence_not_in_source');
+  assert.equal(evidence.kind, 'MALFORMED_RESPONSE');
+  assert.match(evidence.message, /依据核验/);
+  assert.match(evidence.message, /已拒绝展示/);
+  assert.match(evidence.message, /evidence_not_in_source/);
+  const disclaimer = buildValidationError('missing_security_disclaimer');
+  assert.match(disclaimer.message, /免责声明缺失/);
+  assert.match(disclaimer.message, /missing_security_disclaimer/);
+});
+
+test('离线校验失败文案明确零网络且不泄露模型风险结论', () => {
+  const err = buildValidationError('evidence_not_in_source', { demo: true });
+  assert.match(err.message, /离线演示/);
+  assert.match(err.message, /未发送网络请求/);
+  assert.doesNotMatch(err.message, /凭据诱导|钓鱼话术/);
 });
 
 test('所有错误类别均有面向用户的下一步文案，且不含敏感占位', () => {

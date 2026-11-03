@@ -5,19 +5,21 @@
 import {
   ANALYZE_RESPONSE,
   ANALYZE_CANCEL,
-  SAVE_KEY,
-  CLEAR_KEY,
   GET_STATE,
   createAnalyzeRequest,
 } from '../contracts/messages.js';
 import { checkInput } from '../services/analysis-service.js';
+import { buildValidationError } from '../services/error-mapping.js';
+import { validateResult } from '../services/result-validator.js';
 import { loadPrefs, savePrefs } from '../infrastructure/task-store.js';
-import { DEMO_TEXT, DEMO_RESULTS } from '../config/demo-samples.js';
+import { DEMO_RESULTS } from '../config/demo-samples.js';
 import {
   collectElements,
   renderView,
   resultToText,
 } from './popup-render.js';
+import { bindSettings } from './settings-controller.js';
+import { writeClipboardText } from './clipboard.js';
 
 export function initPopupView() {
   const els = collectElements();
@@ -29,6 +31,8 @@ export function initPopupView() {
     targetLanguage: 'auto',
     hasKey: false,
     demo: false,
+    demoResult: null,
+    activeEvidence: null,
     expanded: false,
     currentRequestId: null,
     result: null,
@@ -50,6 +54,32 @@ export function initPopupView() {
     if (state.taskState === 'success') state.taskState = 'stale';
     state.copyFeedback = '';
     state.statusText = '';
+    state.activeEvidence = null;
+  }
+
+  function submitDemo() {
+    const candidate = state.demoResult || DEMO_RESULTS[state.mode];
+    const validation = validateResult(candidate, { mode: state.mode, sourceText: state.text.trim() });
+    state.currentRequestId = null;
+    state.meta = {
+      model: 'offline-demo',
+      demo: true,
+      source: 'demo',
+      generatedAt: Date.now(),
+    };
+    state.copyFeedback = '';
+    if (!validation.ok) {
+      state.taskState = 'error';
+      state.result = null;
+      state.error = buildValidationError(validation.reason, { demo: true });
+      state.statusText = '离线演示：校验失败，未展示模型结果。';
+    } else {
+      state.taskState = 'success';
+      state.result = validation.result;
+      state.error = null;
+      state.statusText = '离线演示结果已生成，未发送网络请求。';
+    }
+    render();
   }
 
   function submit() {
@@ -70,13 +100,7 @@ export function initPopupView() {
       return;
     }
     if (state.demo) {
-      state.taskState = 'success';
-      state.result = DEMO_RESULTS[state.mode];
-      state.meta = { model: 'demo', demo: true, source: 'demo', generatedAt: Date.now() };
-      state.error = null;
-      state.copyFeedback = '';
-      state.statusText = '离线演示结果已生成，未发送网络请求。';
-      render();
+      submitDemo();
       return;
     }
     if (!state.hasKey) {
@@ -92,6 +116,7 @@ export function initPopupView() {
       return;
     }
     state.currentRequestId = crypto.randomUUID();
+    state.activeEvidence = null;
     state.taskState = 'loading';
     state.error = null;
     state.copyFeedback = '';
@@ -131,25 +156,7 @@ export function initPopupView() {
   async function copyResult() {
     if (state.taskState !== 'success' || !state.result) return;
     const text = resultToText({ result: state.result, meta: state.meta });
-    try {
-      await navigator.clipboard.writeText(text);
-      state.copyFeedback = '已复制';
-    } catch {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.setAttribute('readonly', '');
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.append(ta);
-      ta.select();
-      try {
-        document.execCommand('copy');
-        state.copyFeedback = '已复制';
-      } catch {
-        state.copyFeedback = '复制失败，请手动选择文本复制。';
-      }
-      ta.remove();
-    }
+    state.copyFeedback = await writeClipboardText(text);
     render();
   }
 
@@ -166,13 +173,25 @@ export function initPopupView() {
   }
 
   function bind() {
-    els.btnSettings.addEventListener('click', openSettings);
-    els.btnBack.addEventListener('click', closeSettings);
+    bindSettings({ els, state, actions: { render, openSettings, closeSettings } });
     els.btnPrimary.addEventListener('click', submit);
     els.btnCopy.addEventListener('click', copyResult);
     els.btnExpand.addEventListener('click', () => {
       state.expanded = !state.expanded;
       render();
+    });
+    els.resultFindings.addEventListener('click', (event) => {
+      const button = event.target.closest('button[data-evidence-index]');
+      if (!button || !state.result) return;
+      const finding = state.result.findings[Number(button.dataset.evidenceIndex)];
+      if (!finding || !finding.evidence) return;
+      state.activeEvidence = finding.evidence;
+      render();
+      const mark = els.sourceText.querySelector('mark[data-evidence-active="true"]');
+      if (mark) {
+        mark.scrollIntoView({ block: 'nearest' });
+        mark.focus({ preventScroll: true });
+      }
     });
 
     for (const radio of document.querySelectorAll('input[name="mode"]')) {
@@ -197,76 +216,6 @@ export function initPopupView() {
         return;
       }
       submit();
-    });
-
-    els.btnToggleKey.addEventListener('click', () => {
-      state.keyVisible = !state.keyVisible;
-      render();
-    });
-
-    els.btnSaveKey.addEventListener('click', async () => {
-      const value = els.keyInput.value;
-      if (value.trim() === '') {
-        els.keyStatus.textContent = 'Key 不能为空。下一步：粘贴 API Key 后保存。';
-        return;
-      }
-      state.savingKey = true;
-      render();
-      const res = await chrome.runtime.sendMessage({ type: SAVE_KEY, key: value }).catch(() => null);
-      state.savingKey = false;
-      if (res && res.ok) {
-        els.keyInput.value = ''; // 保存后清空输入，不回显完整 Key
-        state.hasKey = true;
-        els.keyStatus.textContent = '已保存到本次会话。保存不代表 Key 已通过 API 验证。';
-      } else {
-        els.keyStatus.textContent = (res && res.error && res.error.message) || '保存失败，请重试。';
-      }
-      render();
-    });
-
-    els.keyInput.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        els.btnSaveKey.click();
-      }
-    });
-
-    els.btnClearKey.addEventListener('click', () => {
-      state.clearConfirmOpen = true;
-      render();
-      els.btnClearCancel.focus();
-    });
-
-    els.btnClearCancel.addEventListener('click', () => {
-      state.clearConfirmOpen = false;
-      render();
-    });
-
-    els.btnClearConfirm.addEventListener('click', async () => {
-      state.clearingKey = true;
-      render();
-      const res = await chrome.runtime.sendMessage({ type: CLEAR_KEY }).catch(() => null);
-      state.clearingKey = false;
-      state.clearConfirmOpen = false;
-      if (res && res.ok) {
-        state.hasKey = false;
-        els.clearStatus.textContent = '密钥已从本次会话清除。';
-      } else {
-        els.clearStatus.textContent = '清除失败，请重试。';
-      }
-      render();
-    });
-
-    els.btnDemo.addEventListener('click', () => {
-      state.demo = true;
-      state.text = DEMO_TEXT;
-      state.result = null;
-      state.meta = null;
-      state.error = null;
-      state.copyFeedback = '';
-      state.taskState = 'ready';
-      state.statusText = '已加载离线演示样例。点击主按钮查看演示结果（不会发送网络请求）。';
-      closeSettings();
     });
 
     chrome.runtime.onMessage.addListener((message) => {

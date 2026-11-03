@@ -60,6 +60,7 @@ export function collectElements() {
     staleBar: byId('stale-bar'),
     demoBar: byId('demo-bar'),
     resultMeta: byId('result-meta'),
+    resultVerification: byId('result-verification'),
     resultOutput: byId('result-output'),
     resultFindings: byId('result-findings'),
     btnCopy: byId('btn-copy'),
@@ -77,12 +78,31 @@ export function collectElements() {
     btnClearConfirm: byId('btn-clear-confirm'),
     clearStatus: byId('clear-status'),
     btnDemo: byId('btn-demo'),
+    btnDemoInjection: byId('btn-demo-injection'),
+    btnDemoReject: byId('btn-demo-reject'),
   };
 }
 
-function renderFindings(container, findings) {
+/** 原文只通过文本节点与 mark 拼接；evidence 已在业务层通过精确子串校验。 */
+function renderSourceText(container, text, activeEvidence) {
   container.textContent = '';
-  for (const f of findings) {
+  const index = activeEvidence ? text.indexOf(activeEvidence) : -1;
+  if (index < 0) {
+    container.textContent = text;
+    return;
+  }
+  container.append(document.createTextNode(text.slice(0, index)));
+  const mark = document.createElement('mark');
+  mark.className = 'evidence-highlight';
+  mark.dataset.evidenceActive = 'true';
+  mark.tabIndex = -1;
+  mark.textContent = activeEvidence;
+  container.append(mark, document.createTextNode(text.slice(index + activeEvidence.length)));
+}
+
+function renderFindings(container, findings, activeEvidence) {
+  container.textContent = '';
+  findings.forEach((f, index) => {
     const li = document.createElement('li');
     li.className = 'finding';
     const head = document.createElement('div');
@@ -96,8 +116,13 @@ function renderFindings(container, findings) {
     head.append(sev, cat);
     li.append(head);
     if (f.evidence) {
-      const ev = document.createElement('p');
+      const ev = document.createElement('button');
+      ev.type = 'button';
       ev.className = 'finding-evidence';
+      ev.dataset.evidenceIndex = String(index);
+      ev.setAttribute('aria-controls', 'source-text');
+      ev.setAttribute('aria-pressed', String(activeEvidence === f.evidence));
+      ev.setAttribute('aria-label', `在原文中定位：${f.evidence}`);
       ev.textContent = `原文依据：${f.evidence}`;
       li.append(ev);
     }
@@ -106,7 +131,7 @@ function renderFindings(container, findings) {
     rec.textContent = f.recommendation;
     li.append(rec);
     container.append(li);
-  }
+  });
 }
 
 function renderSettings(els, state) {
@@ -138,7 +163,7 @@ export function renderView(els, state) {
   els.sourceText.hidden = !hasText;
   els.btnExpand.hidden = !hasText;
   els.sourceCount.textContent = String(state.text.trim().length);
-  setText(els.sourceText, state.text);
+  renderSourceText(els.sourceText, state.text, state.activeEvidence);
   els.sourceText.classList.toggle('expanded', state.expanded);
   els.btnExpand.textContent = state.expanded ? '收起' : '展开';
   els.btnExpand.setAttribute('aria-expanded', String(state.expanded));
@@ -154,6 +179,7 @@ export function renderView(els, state) {
   els.resultLoading.hidden = true;
   els.resultError.hidden = true;
   els.resultSuccess.hidden = true;
+  els.resultVerification.hidden = true;
   els.result.setAttribute('aria-busy', String(loading));
 
   if (loading) {
@@ -172,14 +198,18 @@ export function renderView(els, state) {
     const source = state.meta.demo ? '离线演示，非 Gemini API 结果' : 'Gemini API';
     setText(
       els.resultMeta,
-      `${MODE_LABELS[state.result.mode]} · ${source} · ${timeLabel(state.meta.generatedAt)}`,
+      `${MODE_LABELS[state.result.mode]} · ${source} · ${state.meta.model || '模型未标注'} · ${timeLabel(state.meta.generatedAt)}`,
     );
-    let output = state.result.output;
-    if (state.result.mode === 'security' && !output.includes(SECURITY_NOTE)) {
-      output = `${output}\n${SECURITY_NOTE}`;
+    if (state.result.mode === 'security') {
+      const count = (state.result.findings || []).filter((finding) => finding.evidence !== '').length;
+      els.resultVerification.hidden = false;
+      setText(
+        els.resultVerification,
+        count > 0 ? `依据核验：${count} / ${count} 条已匹配原文` : '依据核验：无风险引文，仅展示信息提示',
+      );
     }
-    setText(els.resultOutput, output);
-    renderFindings(els.resultFindings, state.result.findings || []);
+    setText(els.resultOutput, state.result.output);
+    renderFindings(els.resultFindings, state.result.findings || [], state.activeEvidence);
     els.btnCopy.disabled = state.taskState === 'stale';
     setText(els.copyFeedback, state.copyFeedback);
   } else {
@@ -200,10 +230,15 @@ export function resultToText({ result, meta }) {
   const lines = [
     `模式：${MODE_LABELS[result.mode] || result.mode}`,
     `来源：${meta.demo ? '离线演示，非 Gemini API 结果' : 'Gemini API'}`,
+    `模型：${meta.model || '未标注'}`,
     `时间：${timeLabel(meta.generatedAt)}`,
     '',
     result.output,
   ];
+  if (result.mode === 'security') {
+    const count = (result.findings || []).filter((finding) => finding.evidence !== '').length;
+    lines.push('', count > 0 ? `依据核验：${count} / ${count} 条已匹配原文` : '依据核验：无风险引文，仅展示信息提示');
+  }
   if (result.findings && result.findings.length > 0) {
     lines.push('');
     for (const f of result.findings) {

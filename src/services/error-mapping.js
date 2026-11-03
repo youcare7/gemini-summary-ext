@@ -13,6 +13,23 @@ export function buildError(kind, { status = 0, retryable = false, message = '' }
   return createError(kind, { status, retryable, message: message || messageFor(kind) });
 }
 
+/** 结果校验失败的用户文案；只暴露脱敏诊断，不回显模型原始输出。 */
+export function buildValidationError(reason, { demo = false } = {}) {
+  let message;
+  if (reason === 'evidence_not_in_source') {
+    message = demo
+      ? '离线演示：模型引文不在所选原文中，已按预期拒绝展示。未发送网络请求。'
+      : '结果未通过依据核验：模型引文不在所选原文中，已拒绝展示。下一步：重试。';
+  } else if (reason === 'missing_security_disclaimer') {
+    message = demo
+      ? '离线演示：安全免责声明缺失，已按预期拒绝展示。未发送网络请求。'
+      : '结果未通过安全边界核验：固定免责声明缺失，已拒绝展示。下一步：重试。';
+  } else {
+    message = '服务返回的内容无法识别。下一步：重试；若持续出现请保留该诊断类别。';
+  }
+  return buildError('MALFORMED_RESPONSE', { message: `${message}（诊断：${reason}）` });
+}
+
 /** 各错误类别 -> 用户可读说明 + 下一步（UIUX §5.3）。 */
 const USER_MESSAGES = {
   MISSING_KEY: '需要先配置 API Key。下一步：打开设置并保存到本次会话。',

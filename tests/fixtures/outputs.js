@@ -140,5 +140,11 @@ export function wrapResult(result, opts) {
   return wrapInteraction(JSON.stringify(result), opts);
 }
 
-/** 离线演示固定结果（唯一真源在 src/config/demo-samples.js，随扩展分发）。 */
-export { DEMO_RESULTS, DEMO_TEXT } from '../../src/config/demo-samples.js';
+/** 离线演示固定输入与结果（唯一真源在 src/config/demo-samples.js，随扩展分发）。 */
+export {
+  DEMO_RESULTS,
+  DEMO_TEXT,
+  DEMO_INJECTION_TEXT,
+  DEMO_INJECTION_RESULT,
+  DEMO_REJECT_RESULT,
+} from '../../src/config/demo-samples.js';

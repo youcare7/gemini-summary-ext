@@ -171,6 +171,9 @@ D:\gemini-summary-ext\
       defaults.js
     ui\
       popup-view.js
+      popup-render.js
+      settings-controller.js
+      clipboard.js
   tests\
     fixtures\
     unit\
@@ -194,7 +197,7 @@ D:\gemini-summary-ext\
 ```json
 {
   "minimum_chrome_version": "127",
-  "permissions": ["contextMenus", "storage"],
+  "permissions": ["contextMenus", "storage", "activeTab", "scripting"],
   "host_permissions": ["https://generativelanguage.googleapis.com/"]
 }
 ```
@@ -203,9 +206,11 @@ D:\gemini-summary-ext\
 
 - Chrome 官方跨源请求文档要求扩展 Service Worker 或扩展页面跨源 fetch 时声明主机权限；应使用单一主机而非通配符。
 - `chrome.action.openPopup()` 从 Chrome 127 起向普通扩展开放，故将 127 作为下限，避免旧版本静默不兼容。
-- 选中文本来自 `contextMenus` 事件，不需要读取标签页或注入脚本。
+- 选中文本来自 `contextMenus` 事件，不需要内容脚本常驻网页。
+- 右键菜单路径可直接携带选中文本；用户点击扩展图标打开弹窗时，通过一次 `activeTab + scripting` 读取活动页当前选中文本，不读取完整网页、不访问链接、不执行网页脚本。
+- `activeTab` 不会使权限常驻；`scripting.executeScript` 只读取 `window.getSelection().toString()`。
 
-明确禁止新增：`tabs`、`activeTab`、`scripting`、`cookies`、`webRequest`、`unlimitedStorage`、`content_scripts`、`<all_urls>`、通配主机权限。若未来需求确需其中任何一项，必须单独 ADR 评审。
+明确禁止新增：`tabs`、`cookies`、`webRequest`、`unlimitedStorage`、`content_scripts`、`<all_urls>`、通配主机权限。若未来需求确需其中任何一项，必须单独 ADR 评审。
 
 ## 8. BYOK、正文与状态存储
 
@@ -213,9 +218,8 @@ D:\gemini-summary-ext\
 
 | 数据 | 默认位置 | 生命周期 | 约束 |
 |---|---|---|---|
-| `geminiApiKey` | `chrome.storage.session` | 浏览器/扩展会话 | 默认不落盘，不写日志 |
-| 可选持久 Key | `chrome.storage.local` | 用户明确选择后持久 | 显示“本地未加密”风险；提供清除按钮 |
-| 模式、目标语言、是否记住 Key | `chrome.storage.local` | 持久 | 仅非敏感偏好 |
+| `geminiApiKey` | `chrome.storage.session` | 浏览器/扩展会话 | 不落盘，不写日志；MVP 不提供持久 Key |
+| 模式、目标语言 | `chrome.storage.local` | 持久 | 仅非敏感偏好 |
 | 选中文本、加载态、结果 | `chrome.storage.session` | 会话 | 不进入 local/sync，不写日志 |
 | 任何 Key 或正文 | `chrome.storage.sync` | 禁止 | 不同步到其他设备 |
 
@@ -388,7 +392,7 @@ response.steps[]
 降级必须显式，不得自动用 Mock 替代失败请求：
 
 1. 默认仍展示已选文本、模式说明和真实错误；摘要、安全审查和翻译不伪造成功。
-2. 提供独立“本地演示”入口，只加载 `tests/fixtures` 的固定结果，界面和导出均标注“本地演示，非 Gemini 结果”，`meta.demo=true`。
+2. 提供独立“离线演示”入口，只加载 `src/config/demo-samples.js` 的固定输入与结果；通过同一结果校验器展示成功，伪造 evidence 则展示拒绝路径。界面和导出均标注“离线演示，非 Gemini API 结果”，`meta.demo=true`，并明确不发送网络请求。
 3. 真实请求失败后保持错误状态，由用户主动切换到演示；切换动作要清除“真实结果”标记。
 4. 无网络时仍可运行单元测试、Playwright Mock 端到端测试和本地演示。
 5. 本轮不引入 Chrome 内置 AI、第三方模型、代理或跨区网络作为隐式替代；这些属于独立产品和合规决策。
