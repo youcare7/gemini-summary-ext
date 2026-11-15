@@ -1,51 +1,77 @@
-# Gemini 极简速审助手
+<div align="center">
 
-> Chrome 划词速审扩展——对选中文本执行摘要、安全审查辅助或中英翻译。  
-> BYOK 自带 Key，结果可核对，失败不伪装，隐私边界清晰。
+# Gemini 极简速审
 
-![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue) ![Chrome 127+](https://img.shields.io/badge/Chrome-127%2B-green) ![Tests 96/96](https://img.shields.io/badge/Tests-96%2F96-brightgreen) ![Version](https://img.shields.io/badge/version-0.9.0--preview-orange)
+**划词即审 —— 摘要 · 安全审查 · 中英翻译**
+
+选中一段话，右键一下就有结果。BYOK 自带 Key，只存本次会话，关掉浏览器就清空；结果可核对，失败不伪装。
+
+<p>
+  <img src="https://img.shields.io/badge/Manifest-V3-blue?style=flat-square" alt="Manifest V3" />
+  <img src="https://img.shields.io/badge/Chrome-127%2B-green?style=flat-square" alt="Chrome 127+" />
+  <img src="https://img.shields.io/badge/Tests-96%2F96-brightgreen?style=flat-square" alt="Tests 96/96" />
+  <img src="https://img.shields.io/badge/version-0.9.0--preview-orange?style=flat-square" alt="Version 0.9.0-preview" />
+  <img src="https://img.shields.io/badge/BYOK-session--only-lightgrey?style=flat-square" alt="BYOK session-only" />
+  <img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="License MIT" />
+</p>
+
+<img src="assets/screenshots/01-popup-idle.png" alt="弹窗空态" width="300" />
+
+</div>
 
 ---
 
-## ⚠️ 当前版本状态：0.9.0-preview（预发布）
+> [!IMPORTANT]
+> **当前版本 `0.9.0-preview`（预发布，不是 v1.0.0）**
+> 真实 Gemini API 调用尚未验收。离线演示可完整跑通，但结果**全程标注「非 Gemini API 结果」**，不伪装成实时推理。
 
-**本版本不是 v1.0.0，真实 Gemini API 调用尚未验收。**
-
-| 项 | 状态 | 说明 |
-|---|---|---|
-| 扩展加载与 UI 流程 | ✅ 已验证 | 96 项自动化测试全绿（单测 77 + E2E 19），含 axe 无障碍扫描 |
+| 能力项 | 状态 | 说明 |
+| :--- | :--- | :--- |
+| 扩展加载与 UI 流程 | ✅ 已验证 | **96 项自动化测试全绿**（单测 77 + E2E 19），含 axe 无障碍扫描 |
 | 三模式提示词与结果校验 | ✅ 已验证 | Mock 响应下全路径通过 |
 | BYOK 会话存储与清除 | ✅ 已验证 | 仅 `chrome.storage.session`，测试覆盖 |
-| 错误分类（401/403/404/429/超时/网络/格式） | ✅ 已验证 | Mock 响应下分类正确，不伪造成功 |
+| 错误分类 | ✅ 已验证 | 401 / 403 / 404 / 429 / 超时 / 网络 / 格式，分类正确，不伪造成功 |
 | **真实 API 推理** | ❌ **未验收** | 当前 Google Cloud 项目报 403 免费层不可用（OPEN-001） |
 | **默认模型 `gemini-3.8-flash`** | ❌ **未实测** | 仅为官方文档候选值，未经真实推理确认（OPEN-002） |
 
-按本项目 PRD 发布门槛（[`docs/PRD.md`](docs/PRD.md) §12）：**三种模式均需至少一条真实 API 成功记录，才能标记 v1.0.0**。当前阻塞未解除，因此版本号保持 `0.9.0-preview`，Release 标记为 Pre-release。离线演示可完整跑通，但**全程标注"非 Gemini API 结果"**。
+按本项目 PRD 发布门槛（[`docs/PRD.md`](docs/PRD.md) §12）：**三种模式均需至少一条真实 API 成功记录，才能标记 v1.0.0**。当前阻塞未解除，因此版本号保持 `0.9.0-preview`，Release 标记为 Pre-release。
 
-> 发布门槛原文：*"若官方资格仍阻塞，则版本只能标为演示/预发布，不得伪装完整 v1.0.0。"*
+> 发布门槛原文：*「若官方资格仍阻塞，则版本只能标为演示/预发布，不得伪装完整 v1.0.0。」*
 
 ---
 
-## 功能总览
+## 📸 界面一览
+
+<table>
+  <tr>
+    <td align="center"><img src="assets/screenshots/01-popup-idle.png" alt="弹窗空态" width="240" /><br /><sub>① 划词后弹窗空态</sub></td>
+    <td align="center"><img src="assets/screenshots/02-result-security.png" alt="风险识别结果（离线演示）" width="240" /><br /><sub>② 风险识别结果（离线演示）</sub></td>
+    <td align="center"><img src="assets/screenshots/03-settings.png" alt="设置页" width="240" /><br /><sub>③ 设置页（BYOK 保存 Key）</sub></td>
+  </tr>
+</table>
+
+---
+
+## ✨ 功能总览
 
 | 模式 | 输入 | 输出 |
-|------|------|------|
-| **摘要** | 有明确论点的文本 | 3–5 条要点；信息不足时明确提示，不补造内容 |
-| **安全审查** | 任意选中文本 | 风险类型、原文依据、判断理由、不确定性、建议动作 |
-| **翻译** | 中文或英文 | 完整译文，数字与代码语义不变 |
+| :--- | :--- | :--- |
+| **📝 摘要** | 有明确论点的文本 | 3–5 条要点；信息不足时明确提示，不补造内容 |
+| **🛡 安全审查** | 任意选中文本 | 风险类型、原文依据、判断理由、不确定性、建议动作 |
+| **🌐 翻译** | 中文或英文 | 完整译文，数字与代码语义不变 |
 
-核心特性：
+### 核心特性
 
-- **三种触发方式**：右键菜单 / 快捷键 `Ctrl+Shift+S` / 点扩展图标自动捕获
-- **BYOK**：API Key 仅保存到浏览器会话，关浏览器即清除
-- **可信防线离线演示**：可演示风险识别、提示注入文本处理，以及伪造 evidence 被拒绝；全程无网络请求
-- **依据可核对**：安全结果显示引文核验数量，点击原文依据可定位并高亮对应选中文本
-- **安全渲染**：模型输出按纯文本展示，含 HTML/脚本也不会执行
-- **零日志**：生产环境不记录原文、Key、请求头或完整响应
+- **三种触发方式** — 右键菜单 / 快捷键 `Ctrl+Shift+S` / 点扩展图标自动捕获
+- **BYOK** — API Key 仅保存到浏览器会话，关浏览器即清除
+- **可信防线离线演示** — 可演示风险识别、提示注入文本处理，以及伪造 evidence 被拒绝；全程无网络请求
+- **依据可核对** — 安全结果显示引文核验数量，点击原文依据可定位并高亮对应选中文本
+- **安全渲染** — 模型输出按纯文本展示，含 HTML/脚本也不会执行
+- **零日志** — 生产环境不记录原文、Key、请求头或完整响应
 
 ---
 
-## 可信处理链路
+## 🔍 可信处理链路
 
 ```text
 选中文本
@@ -58,29 +84,27 @@
       拒绝展示成功结果，只显示脱敏诊断
 ```
 
-结构化输出只降低格式波动，不等于事实正确。本项目把客户端校验作为独立防线：模型返回格式合法但引文不在原文中时，仍判定失败。设置页提供固定的“伪造依据拒绝样例”，无需 Key 或网络即可复现。
+结构化输出只降低格式波动，不等于事实正确。本项目把客户端校验作为独立防线：模型返回格式合法但引文不在原文中时，仍判定失败。设置页提供固定的「伪造依据拒绝样例」，无需 Key 或网络即可复现。
 
-演示时始终区分两条路径：真实 API 结果显示实际模型名；离线结果显示“非 Gemini API 结果”，不把固定样例伪装成实时推理。
+演示时始终区分两条路径：真实 API 结果显示实际模型名；离线结果显示「非 Gemini API 结果」，不把固定样例伪装成实时推理。
 
 ---
 
-## 快速开始
-
-![弹窗空态](assets/screenshots/01-popup-idle.png)
+## 🚀 快速开始
 
 ### 1. 安装
 
 1. 打开 Chrome，地址栏输入 `chrome://extensions/`
-2. 开启右上角 **"开发者模式"**
-3. 点击 **"加载已解压的扩展程序"**，选择本项目目录
+2. 开启右上角 **「开发者模式」**
+3. 点击 **「加载已解压的扩展程序」**，选择本项目目录
 4. 扩展图标出现在工具栏
 
 ### 2. 配置 API Key
 
 1. 在任意网页**划选一段文字**
 2. 用任意方式打开弹窗（点图标 / 快捷键 / 右键）
-3. 点击右上角 **设置按钮**
-4. 粘贴你的 Gemini API Key → 点 **"保存到本次会话"**
+3. 点击右上角**设置按钮**
+4. 粘贴你的 Gemini API Key → 点 **「保存到本次会话」**
 
 > 获取 Key：[Google AI Studio](https://aistudio.google.com/apikey)
 
@@ -88,81 +112,53 @@
 
 划选文字 → 选择模式 → 点击主按钮 → 查看结果
 
-![风险识别结果（离线演示）](assets/screenshots/02-result-security.png)
-
-![设置页](assets/screenshots/03-settings.png)
-
 ---
 
-## 三种触发方式
+## ⌨️ 三种触发方式
 
 | 方式 | 操作 | 步骤 |
-|------|------|------|
-| **右键菜单** | 划词 → 右键 → "使用 Gemini 速审这段内容" | 3 步 |
+| :--- | :--- | :--- |
+| **右键菜单** | 划词 → 右键 → 「使用 Gemini 速审这段内容」 | 3 步 |
 | **点图标** | 划词 → 点工具栏扩展图标 | 2 步 |
-| **快捷键** | 划词 → 按 `Ctrl+Shift+S`（Mac: `Cmd+Shift+S`） | 2 步，最快 |
+| **快捷键** | 划词 → 按 `Ctrl+Shift+S`（Mac：`Cmd+Shift+S`） | 2 步，最快 |
 
-> 快捷键可在 `chrome://extensions/shortcuts` 中自定义。  
+> 快捷键可在 `chrome://extensions/shortcuts` 中自定义。
 > 三种方式都只捕获你**主动选中的文字**，不读取整页内容或浏览历史。
 
 ---
 
-## 权限说明
+## 🔐 权限说明
 
 | 权限 | 用途 | 何时触发 |
-|------|------|---------|
+| :--- | :--- | :--- |
 | `contextMenus` | 注册右键菜单 | 右键时 |
 | `storage` | 保存会话 Key、任务状态、非敏感偏好 | 使用中 |
-| `activeTab` | 临时访问当前标签页，读取选中文本 | 你主动调用扩展时（点图标/快捷键/右键） |
+| `activeTab` | 临时访问当前标签页，读取选中文本 | 你主动调用扩展时（点图标 / 快捷键 / 右键） |
 | `scripting` | 在当前页面执行脚本读取选中文本 | 同上 |
-| `host_permissions: generativelanguage.googleapis.com` | 调用 Gemini API | 点击"分析"按钮时 |
+| `host_permissions:`<br />`generativelanguage.googleapis.com` | 调用 Gemini API | 点击「分析」按钮时 |
 
 **不会做的事**：读取浏览历史、后台访问网页、采集用户行为、上传选中文本到第三方服务器。
 
 ---
 
-## 错误排查
+## 🧱 技术栈
 
-| 界面提示 | 含义与下一步 |
-|----------|-------------|
-| 需要先配置 API Key | 打开设置保存 Key 后重试 |
-| API Key 未通过验证（401） | 检查 Key 是否正确；仍失败时到官方后台确认 |
-| 当前项目无法调用此 API（403） | 项目免费层资格/地区/模型权限问题；查看官方文档。不提供跨区绕过建议 |
-| 所选模型不可用（404） | 模型候选未经真实推理验证；在官方后台确认可用模型 |
-| 请求频率或项目额度暂时受限（429） | 稍后重试，或查看官方额度说明 |
-| 等待超过 30 秒，本次请求已停止 | 可手动重试 |
-| 无法连接 Gemini API，请检查网络 | 检查网络后重试；也可进入离线演示 |
-| 服务返回的内容无法识别 | 响应校验失败，重试；持续出现请保留脱敏诊断类别 |
-| 已选 N 字，超过 10,000 字上限 | 缩短选区后重试 |
-| 上次任务状态无法恢复，请重新提交 | 弹窗关闭期间任务中断，重新提交 |
+<table>
+  <tr><td><b>运行时</b></td><td>原生 JavaScript ES modules</td><td>零依赖，直接加载</td></tr>
+  <tr><td><b>平台</b></td><td>Manifest V3</td><td>Chrome 扩展当前标准</td></tr>
+  <tr><td><b>API</b></td><td>Gemini Interactions API</td><td>2026-06 起官方默认接口</td></tr>
+  <tr><td><b>存储</b></td><td><code>chrome.storage.session</code></td><td>敏感数据不落盘</td></tr>
+  <tr><td><b>测试</b></td><td><code>node:test</code> + Playwright + axe-core</td><td>离线单测、真实浏览器 E2E 与 WCAG 自动扫描</td></tr>
+  <tr><td><b>图标</b></td><td>Lucide 本地 SVG</td><td>统一描边，无运行时</td></tr>
+</table>
 
----
-
-## 限制（MVP 边界）
-
-- **真实 API 未验收**：默认模型候选 `gemini-3.8-flash`（未经真实推理验证），项目免费层资格与模型可用性需实际调用确认。403 不等于 Key 格式或模型下线问题。
-- 仅 Chrome（≥ 127）中文界面。
-- 无整页抓取、PDF/OCR、对话追问、自定义提示词、多模型、历史记录、账户同步。
-- 安全审查只做**文本级**风险信号辅助判断：不访问 URL、不查信誉、不扫文件；不构成安全保证。
-- 结果由生成式模型产出：结构化输出降低格式波动，不保证事实正确，请核对后再采用。
+<p align="center">
+  <img src="https://skillicons.dev/icons?i=js,html,css,nodejs,git,github&perline=6" alt="Tech stack" />
+</p>
 
 ---
 
-## 安全与隐私
-
-| 措施 | 说明 |
-|------|------|
-| 存储矩阵 | Key 与正文仅存 `chrome.storage.session`（关浏览器即清）；`storage.local` 只存模式/翻译方向；`storage.sync` 不存任何敏感数据 |
-| 零持久日志 | 不打印/不持久记录原文、Key、请求头、完整响应 |
-| 安全渲染 | 一律 `textContent`，禁止 `innerHTML` 渲染动态内容 |
-| 图标规范 | Lucide 本地静态 SVG（ISC 许可），无 emoji 功能图标 |
-| BYOK 边界 | Key 存在浏览器扩展上下文中，不能宣称"不可提取"；清除本扩展 Key 不会撤销服务商后台的密钥 |
-
-> 请勿提交密码、密钥、身份证件、未公开资料或他人敏感信息。
-
----
-
-## 测试
+## 🧪 测试
 
 ```bash
 npm ci                           # 安装测试依赖
@@ -171,7 +167,7 @@ npm test                         # 运行全部测试（离线，无需真实 Ke
 ```
 
 | 测试类型 | 命令 | 覆盖范围 |
-|---------|------|---------|
+| :--- | :--- | :--- |
 | 单元测试 | `npm run test:unit` | 提示词三模式、结果校验、错误映射、输入边界、API 契约、存储、源码卫生（零 console / 零 innerHTML） |
 | E2E 测试 | `npm run test:e2e` | BYOK、三模式、安全硬约束、错误分类、XSS、离线演示、取消、axe 无障碍 |
 | 界面截图 | `npm run test:screenshots` | 重新生成主视图、结果页与设置页截图 |
@@ -185,31 +181,77 @@ npm test                         # 运行全部测试（离线，无需真实 Ke
 
 ### 人工冒烟清单
 
-1. 划词 → 点图标：确认文字自动带入
-2. 按 `Ctrl+Shift+S`：确认快捷键触发弹窗
-3. 未配置 Key 点分析：本地提示，零网络请求
-4. 三模式各跑一次（离线演示）：确认结果标注来源
-5. 关闭重开弹窗：任务状态可恢复
-6. 重启浏览器：会话 Key 已清除
+- [ ] 划词 → 点图标：确认文字自动带入
+- [ ] 按 `Ctrl+Shift+S`：确认快捷键触发弹窗
+- [ ] 未配置 Key 点分析：本地提示，零网络请求
+- [ ] 三模式各跑一次（离线演示）：确认结果标注来源
+- [ ] 关闭重开弹窗：任务状态可恢复
+- [ ] 重启浏览器：会话 Key 已清除
 
 ---
 
-## 目录结构
+## 🛡 安全与隐私
 
-```
+| 措施 | 说明 |
+| :--- | :--- |
+| **存储矩阵** | Key 与正文仅存 `chrome.storage.session`（关浏览器即清）；`storage.local` 只存模式/翻译方向；`storage.sync` 不存任何敏感数据 |
+| **零持久日志** | 不打印 / 不持久记录原文、Key、请求头、完整响应 |
+| **安全渲染** | 一律 `textContent`，禁止 `innerHTML` 渲染动态内容 |
+| **图标规范** | Lucide 本地静态 SVG（ISC 许可），无 emoji 功能图标 |
+| **BYOK 边界** | Key 存在浏览器扩展上下文中，不能宣称「不可提取」；清除本扩展 Key 不会撤销服务商后台的密钥 |
+
+> 请勿提交密码、密钥、身份证件、未公开资料或他人敏感信息。
+
+---
+
+<details>
+<summary><b>🩺 错误排查（点开查看对照表）</b></summary>
+
+| 界面提示 | 含义与下一步 |
+| :--- | :--- |
+| 需要先配置 API Key | 打开设置保存 Key 后重试 |
+| API Key 未通过验证（401） | 检查 Key 是否正确；仍失败时到官方后台确认 |
+| 当前项目无法调用此 API（403） | 项目免费层资格 / 地区 / 模型权限问题；查看官方文档。不提供跨区绕过建议 |
+| 所选模型不可用（404） | 模型候选未经真实推理验证；在官方后台确认可用模型 |
+| 请求频率或项目额度暂时受限（429） | 稍后重试，或查看官方额度说明 |
+| 等待超过 30 秒，本次请求已停止 | 可手动重试 |
+| 无法连接 Gemini API，请检查网络 | 检查网络后重试；也可进入离线演示 |
+| 服务返回的内容无法识别 | 响应校验失败，重试；持续出现请保留脱敏诊断类别 |
+| 已选 N 字，超过 10,000 字上限 | 缩短选区后重试 |
+| 上次任务状态无法恢复，请重新提交 | 弹窗关闭期间任务中断，重新提交 |
+
+</details>
+
+<details>
+<summary><b>🚧 限制（MVP 边界）</b></summary>
+
+- **真实 API 未验收**：默认模型候选 `gemini-3.8-flash`（未经真实推理验证），项目免费层资格与模型可用性需实际调用确认。403 不等于 Key 格式或模型下线问题。
+- 仅 Chrome（≥ 127）中文界面。
+- 无整页抓取、PDF/OCR、对话追问、自定义提示词、多模型、历史记录、账户同步。
+- 安全审查只做**文本级**风险信号辅助判断：不访问 URL、不查信誉、不扫文件；不构成安全保证。
+- 结果由生成式模型产出：结构化输出降低格式波动，不保证事实正确，请核对后再采用。
+
+</details>
+
+<details>
+<summary><b>📁 目录结构</b></summary>
+
+```text
 gemini-summary-ext/
 ├── manifest.json              # MV3 配置（权限、快捷键）
 ├── background.js              # Service Worker 装配入口
 ├── popup.html / popup.js      # 弹窗入口
 ├── styles/popup.css           # Design Token + 样式
 ├── assets/icons/              # Lucide 本地 SVG + 工具栏 PNG 图标（16/32/48/128）+ 许可
+├── assets/screenshots/        # 界面截图（README 展示用）
 ├── src/
 │   ├── background/            # controller / menu / message-router
 │   ├── services/              # prompt-builder / analysis-service / result-validator / error-mapping
 │   ├── infrastructure/        # gemini-client / key-store / task-store
 │   ├── contracts/             # messages / result-schema
 │   ├── config/                # defaults.js（模型/上限/超时）、demo-samples.js（离线演示样例）
-│   └── ui/                    # popup-view（状态机）/ popup-render（安全 DOM）/ settings-controller（设置交互）/ clipboard（复制兜底）
+│   └── ui/                    # popup-view（状态机）/ popup-render（安全 DOM）
+│                              # settings-controller（设置交互）/ clipboard（复制兜底）
 ├── tests/
 │   ├── fixtures/              # 固定测试样例
 │   ├── unit/                  # 单元测试（77 例）
@@ -221,23 +263,10 @@ gemini-summary-ext/
 └── README.md
 ```
 
----
-
-## 技术栈
-
-| 层 | 选型 | 理由 |
-|----|------|------|
-| 运行时 | 原生 JavaScript ES modules | 零依赖，直接加载 |
-| 平台 | Manifest V3 | Chrome 扩展当前标准 |
-| API | Gemini Interactions API | 2026-06 起官方默认接口 |
-| 存储 | `chrome.storage.session` | 敏感数据不落盘 |
-| 测试 | `node:test` + Playwright + axe-core | 离线单测、真实浏览器 E2E 与 WCAG 自动扫描 |
-| 图标 | Lucide 本地 SVG | 统一描边，无运行时 |
+</details>
 
 ---
 
-## 开源许可
+## 📄 开源许可
 
-代码：MIT  
-图标：[Lucide ISC License](assets/icons/LICENSE)  
-更新日志：[CHANGELOG.md](CHANGELOG.md)
+代码：[MIT](LICENSE) · 图标：[Lucide ISC License](assets/icons/LICENSE) · 更新日志：[CHANGELOG.md](CHANGELOG.md)
